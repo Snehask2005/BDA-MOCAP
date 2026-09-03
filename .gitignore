@@ -1,0 +1,59 @@
+# ==============================
+# Python
+# ==============================
+
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python packaging
+*.egg-info/
+build/
+dist/
+
+# ==============================
+# Testing
+# ==============================
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==============================
+# IDE
+# ==============================
+
+.vscode/
+.idea/
+
+# ==============================
+# Jupyter
+# ==============================
+
+.ipynb_checkpoints/
+
+# ==============================
+# Operating system
+# ==============================
+
+.DS_Store
+Thumbs.db
+
+# ==============================
+# Large datasets
+# ==============================
+
+data/**/*.parquet
+data/**/*.csv
+data/**/*.json
+
+# ==============================
+# Experiment outputs
+# ==============================
+
+experiments/results/*
