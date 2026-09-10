@@ -1,0 +1,18 @@
+{
+  "currency": "USD",
+  "cpu": {
+    "cost_per_vcore_hour": 0.048
+  },
+  "io": {
+    "cost_per_gb_scanned": 0.005
+  },
+  "shuffle": {
+    "cost_per_gb_shuffled": 0.01
+  },
+  "memory": {
+    "cost_per_gb_hour": 0.006
+  },
+  "latency": {
+    "penalty_per_second": 0.0
+  }
+}
