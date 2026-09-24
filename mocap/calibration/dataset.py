@@ -13,7 +13,7 @@ import csv
 import os
 from typing import Iterable, List
 
-from mocap.cost.analytical import PlanMetrics
+from mocap.interfaces import PlanMetrics
 
 _COLUMNS = [
     "plan_id",

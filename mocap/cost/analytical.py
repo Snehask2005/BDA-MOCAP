@@ -1,16 +1,17 @@
 """
-Analytical (formula-based) cost and latency model.
+Analytical cost and latency model.
 
-Defines PlanMetrics — the shared object this module hands off to
-the optimizer (Student 3) per the team's integration contract:
-"Hridhika -> Student 3: PlanMetrics with estimated cost/latency and
-CPU/I/O/shuffle components."
+This module converts resource estimates into predicted monetary cost and
+latency. It does NOT execute a query.
+
+Runtime observations are represented separately by ExecutionTelemetry.
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Optional
 
+from mocap.interfaces import PlanMetrics
 from mocap.cost.pricing import (
     PricingConfig,
     cpu_cost,
@@ -20,29 +21,6 @@ from mocap.cost.pricing import (
 )
 
 
-@dataclass
-class PlanMetrics:
-    """Shared object handed from the cost module to the optimizer."""
-
-    plan_id: str
-    query_id: str
-
-    estimated_cost: float
-    estimated_latency: float
-
-    cpu_component: float
-    io_component: float
-    shuffle_component: float
-
-    # Raw resource counters the estimate was built from.
-    cpu_seconds: float
-    bytes_scanned: float
-    bytes_shuffled: float
-
-    actual_cost: Optional[float] = None
-    actual_latency: Optional[float] = None
-
-
 def estimate_plan_metrics(
     plan_id: str,
     query_id: str,
@@ -50,17 +28,29 @@ def estimate_plan_metrics(
     bytes_scanned: float,
     bytes_shuffled: float,
     wall_clock_seconds: float,
-    num_cores: int = 1,
     config: Optional[PricingConfig] = None,
 ) -> PlanMetrics:
     """
-    Build a PlanMetrics object from raw telemetry counters. Cost is
-    the sum of CPU + I/O + shuffle dollar cost; latency is taken
-    directly as the measured wall-clock time.
+    Convert predicted resource usage into predicted cost/latency.
+
+    `cpu_seconds` is aggregate CPU-seconds.
+    `wall_clock_seconds` is predicted elapsed time.
     """
+    if cpu_seconds < 0:
+        raise ValueError("cpu_seconds must be non-negative")
+
+    if bytes_scanned < 0:
+        raise ValueError("bytes_scanned must be non-negative")
+
+    if bytes_shuffled < 0:
+        raise ValueError("bytes_shuffled must be non-negative")
+
+    if wall_clock_seconds < 0:
+        raise ValueError("wall_clock_seconds must be non-negative")
+
     cfg = config or load_pricing_config()
 
-    c_cpu = cpu_cost(cpu_seconds, num_cores, cfg)
+    c_cpu = cpu_cost(cpu_seconds, cfg)
     c_io = io_cost(bytes_scanned, cfg)
     c_shuffle = shuffle_cost(bytes_shuffled, cfg)
 
@@ -78,8 +68,23 @@ def estimate_plan_metrics(
     )
 
 
-def attach_actuals(metrics: PlanMetrics, actual_cost: float, actual_latency: float) -> PlanMetrics:
-    """Record ground-truth cost/latency once the plan has executed."""
+def attach_actuals(
+    metrics: PlanMetrics,
+    actual_cost: float,
+    actual_latency: float,
+) -> PlanMetrics:
+    """
+    Backward-compatible helper for older callers.
+
+    New calibration code should store observations in ExecutionTelemetry
+    instead of attaching actuals directly to prediction objects.
+    """
+    if actual_cost < 0:
+        raise ValueError("actual_cost must be non-negative")
+
+    if actual_latency < 0:
+        raise ValueError("actual_latency must be non-negative")
+
     metrics.actual_cost = actual_cost
     metrics.actual_latency = actual_latency
     return metrics

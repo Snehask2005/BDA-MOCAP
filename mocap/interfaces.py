@@ -67,16 +67,43 @@ class ExecutionResult:
 
 @dataclass
 class PlanMetrics:
-    """Round-trips with Student 2's cost model; used when Adaptive Mode replans."""
+    """Estimated and measured metrics for a candidate plan."""
 
     plan_id: str
+    query_id: str
+
     estimated_cost: float
     estimated_latency: float
+
     cpu_component: float = 0.0
     io_component: float = 0.0
     shuffle_component: float = 0.0
+
+    cpu_seconds: float = 0.0
+    bytes_scanned: float = 0.0
+    bytes_shuffled: float = 0.0
+
     actual_cost: Optional[float] = None
     actual_latency: Optional[float] = None
+
+    def to_json(self) -> str:
+        return _dataclass_to_json(self)
+
+@dataclass
+class ExecutionTelemetry:
+    """Observed runtime telemetry collected after a plan executes."""
+
+    plan_id: str
+    query_id: str
+
+    actual_cost: float
+    actual_latency: float
+
+    cpu_seconds: float = 0.0
+    bytes_scanned: float = 0.0
+    bytes_shuffled: float = 0.0
+
+    runtime_metrics: Dict[str, Any] = field(default_factory=dict)
 
     def to_json(self) -> str:
         return _dataclass_to_json(self)
