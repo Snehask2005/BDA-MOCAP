@@ -30,6 +30,7 @@ from mocap.cost.predictor import (
     PredictorConfig,
     predict_candidates,
 )
+from mocap.cost.learned import CalibrationModel
 from mocap.cost.analytical import PlanMetrics
 
 from mocap.optimizer.constraints import ConstraintsFilter
@@ -37,6 +38,8 @@ from mocap.optimizer.pareto import ParetoSelector
 from mocap.optimizer.lagrangian import LagrangianRanker
 
 from mocap.interfaces import SelectedPlan
+
+from mocap.cost.statistics import extract_plan_statistics
 
 
 @dataclass
@@ -75,10 +78,12 @@ class MOCAPPipeline:
         lambda_mult: float = 0.0,
         num_cores: int = 1,
         predictor_config: Optional[PredictorConfig] = None,
+        calibration_model: Optional[CalibrationModel] = None,
     ):
         self.spark = spark
         self.num_cores = num_cores
         self.predictor_config = predictor_config or PredictorConfig()
+        self.calibration_model = calibration_model
 
         self.ranker = LagrangianRanker(
             alpha=alpha,
@@ -93,6 +98,7 @@ class MOCAPPipeline:
         query: QueryRequest,
     ) -> List[CandidatePlan]:
         """Generate physical-plan candidates using Spark/Catalyst."""
+
         return generate_join_candidates(
             query,
             self.spark,
@@ -105,12 +111,39 @@ class MOCAPPipeline:
         """
         Predict candidate metrics BEFORE execution.
 
+        Each candidate is analyzed independently so that candidate-specific
+        Catalyst statistics, including intermediate join sizes, influence
+        its prediction.
+
         No candidate query is executed here.
         """
-        return predict_candidates(
-            candidates,
-            config=self.predictor_config,
-        )
+
+        metrics: Dict[str, PlanMetrics] = {}
+
+        for candidate in candidates:
+            # Construct and optimize this candidate's Spark plan.
+            # This does not execute the query.
+            dataframe = self.spark.sql(
+                candidate.sql
+            )
+
+            # Extract statistics specific to this candidate.
+            statistics = extract_plan_statistics(
+                dataframe
+            )
+
+            # Predict cost/latency for this candidate using its own
+            # Catalyst statistics.
+            candidate_metrics = predict_candidates(
+                [candidate],
+                config=self.predictor_config,
+                statistics=statistics,
+                calibration_model=self.calibration_model,
+            )
+
+            metrics.update(candidate_metrics)
+
+        return metrics
 
     def select_plan(
         self,
@@ -119,6 +152,10 @@ class MOCAPPipeline:
         metrics: Dict[str, PlanMetrics],
     ):
         """Apply hard constraints, Pareto filtering and ranking."""
+
+        # ---------------------------------------------------------
+        # 1. Hard budget/deadline filtering
+        # ---------------------------------------------------------
 
         constraint_filter = ConstraintsFilter(
             budget=query.budget,
@@ -139,9 +176,26 @@ class MOCAPPipeline:
                 "No candidate satisfies the constraints.",
             )
 
+        # ---------------------------------------------------------
+        # 2. Pareto filtering
+        # ---------------------------------------------------------
+
         pareto_front = ParetoSelector.get_pareto_optimal(
             feasible
         )
+
+        if not pareto_front:
+            return (
+                None,
+                feasible,
+                pareto_front,
+                None,
+                "Pareto frontier is empty.",
+            )
+
+        # ---------------------------------------------------------
+        # 3. Lagrangian ranking
+        # ---------------------------------------------------------
 
         ranked = self.ranker.rank_candidates(
             pareto_front,
@@ -154,10 +208,14 @@ class MOCAPPipeline:
                 feasible,
                 pareto_front,
                 None,
-                "Pareto frontier is empty.",
+                "No candidate could be ranked.",
             )
 
         best_plan, best_metrics, best_score = ranked[0]
+
+        # ---------------------------------------------------------
+        # 4. Construct SelectedPlan
+        # ---------------------------------------------------------
 
         selected = SelectedPlan(
             plan_id=best_plan.plan_id,
@@ -190,9 +248,20 @@ class MOCAPPipeline:
         self,
         query: QueryRequest,
     ) -> MOCAPResult:
-        """Generate, predict, constrain and select a physical plan."""
+        """
+        Generate, predict, constrain and select a physical plan.
 
-        candidates = self.generate_candidates(query)
+        This method performs planning only. It does not execute the
+        selected query.
+        """
+
+        # ---------------------------------------------------------
+        # 1. Candidate generation
+        # ---------------------------------------------------------
+
+        candidates = self.generate_candidates(
+            query
+        )
 
         if not candidates:
             return MOCAPResult(
@@ -202,12 +271,25 @@ class MOCAPPipeline:
                 feasible=[],
                 pareto_front=[],
                 selected_plan=None,
-                failure_reason="No candidate plans were generated.",
+                failure_reason=(
+                    "No candidate plans were generated."
+                ),
             )
 
-        # IMPORTANT:
-        # This stage does not execute the candidate queries.
-        metrics = self.estimate_candidates(candidates)
+        # ---------------------------------------------------------
+        # 2. Candidate-specific prediction
+        # ---------------------------------------------------------
+
+        # Each candidate is independently analyzed using its own
+        # Catalyst statistics. This constructs/optimizes plans but
+        # does not execute them.
+        metrics = self.estimate_candidates(
+            candidates
+        )
+
+        # ---------------------------------------------------------
+        # 3. Constraint filtering + Pareto + ranking
+        # ---------------------------------------------------------
 
         (
             selected,
@@ -220,6 +302,10 @@ class MOCAPPipeline:
             candidates=candidates,
             metrics=metrics,
         )
+
+        # ---------------------------------------------------------
+        # 4. Return complete planning result
+        # ---------------------------------------------------------
 
         return MOCAPResult(
             query=query,
@@ -238,11 +324,15 @@ def run_mocap(
     spark: SparkSession,
     **kwargs,
 ) -> MOCAPResult:
-    """Convenience function for running MOCAP."""
+    """
+    Convenience function for running MOCAP.
+    """
 
     pipeline = MOCAPPipeline(
         spark=spark,
         **kwargs,
     )
 
-    return pipeline.run(query)
+    return pipeline.run(
+        query
+    )

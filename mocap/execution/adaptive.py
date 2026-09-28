@@ -74,6 +74,7 @@ class AdaptiveController:
         monitor = RuntimeMonitor(
             spark=self.spark,
             budget=plan.budget * self.config.overrun_tolerance,
+            pricing=self.executor.pricing,
             on_projected_overrun=_on_overrun,
         )
         monitor.start()

@@ -53,3 +53,65 @@ def test_mocap_end_to_end_spark():
     assert result.selected_plan.expected_cost <= query.budget
 
     spark.stop()
+
+
+def test_pipeline_uses_calibration_model():
+    from mocap.cost.learned import CalibrationModel
+
+    spark = (
+        SparkSession.builder
+        .master("local[2]")
+        .appName("MOCAPCalibrationTest")
+        .config("spark.sql.adaptive.enabled", "false")
+        .config("spark.sql.autoBroadcastJoinThreshold", "-1")
+        .getOrCreate()
+    )
+
+    spark.sparkContext.setLogLevel("ERROR")
+
+    customers = [(i, f"customer_{i}") for i in range(20)]
+    orders = [(i, i % 20, float(i + 1)) for i in range(100)]
+
+    spark.createDataFrame(
+        customers, ["id", "name"]
+    ).createOrReplaceTempView("customer")
+
+    spark.createDataFrame(
+        orders, ["id", "customer_id", "amount"]
+    ).createOrReplaceTempView("orders")
+
+    query = QueryRequest(
+        query_id="CALIBRATION_01",
+        sql="""
+            SELECT c.id, COUNT(o.id) AS order_count
+            FROM customer c
+            JOIN orders o
+                ON c.id = o.customer_id
+            GROUP BY c.id
+        """,
+        budget=1.0,
+    )
+
+    baseline = MOCAPPipeline(spark).run(query)
+
+    calibration_model = CalibrationModel(
+        weights=[1.0, 2.0, 1.0, 1.0],
+    )
+
+    calibrated = MOCAPPipeline(
+        spark,
+        calibration_model=calibration_model,
+    ).run(query)
+
+    assert baseline.metrics
+    assert calibrated.metrics
+
+    for plan_id in baseline.metrics:
+        assert plan_id in calibrated.metrics
+
+        assert (
+            calibrated.metrics[plan_id].estimated_cost
+            != baseline.metrics[plan_id].estimated_cost
+        )
+
+    spark.stop()

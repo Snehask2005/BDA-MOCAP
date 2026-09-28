@@ -1,12 +1,16 @@
 """
 Spark execution telemetry collector.
 
-This module executes a candidate plan and collects observed runtime
-measurements. It deliberately does NOT present those measurements as
-pre-execution predictions.
+This module provides two layers:
 
-The resulting ExecutionTelemetry objects can be used as labeled data
-for calibration.
+1. collect_execution_telemetry()
+   Executes a CandidatePlan and observes its telemetry.
+
+2. observe_execution_telemetry()
+   Observes telemetry from a DataFrame that has already been executed.
+
+Telemetry is ground-truth execution data for calibration. It is not a
+pre-execution prediction.
 """
 
 from __future__ import annotations
@@ -14,7 +18,7 @@ from __future__ import annotations
 import time
 from typing import Optional
 
-from pyspark.sql import SparkSession
+from pyspark.sql import DataFrame, SparkSession
 
 from mocap.cost.pricing import PricingConfig, load_pricing_config
 from mocap.interfaces import ExecutionTelemetry
@@ -93,29 +97,44 @@ def _calculate_observed_cost(
     )
 
 
-def collect_execution_telemetry(
+def observe_execution_telemetry(
     candidate: CandidatePlan,
-    spark: SparkSession,
+    dataframe: DataFrame,
+    elapsed: float,
     num_cores: int = 1,
     config: Optional[PricingConfig] = None,
 ) -> ExecutionTelemetry:
     """
-    Execute a candidate and collect ground-truth runtime telemetry.
+    Observe telemetry from an already-executed Spark DataFrame.
 
-    This is an observation step, not a prediction step.
+    This function does NOT trigger another Spark action.
+
+    Parameters
+    ----------
+    candidate:
+        Candidate plan associated with the execution.
+
+    dataframe:
+        DataFrame whose execution has already been triggered.
+
+    elapsed:
+        Wall-clock execution time measured by the caller.
+
+    num_cores:
+        Number of active cores used for the CPU-seconds approximation.
+
+    config:
+        Pricing configuration.
     """
     if num_cores <= 0:
         raise ValueError("num_cores must be positive")
 
+    if elapsed < 0:
+        raise ValueError("elapsed must be non-negative")
+
     cfg = config or load_pricing_config()
 
-    df = spark.sql(candidate.sql)
-
-    start = time.time()
-    df.collect()
-    elapsed = time.time() - start
-
-    java_plan = df._jdf.queryExecution().executedPlan()
+    java_plan = dataframe._jdf.queryExecution().executedPlan()
 
     metric_values = _walk_sql_metrics(java_plan)
 
@@ -143,6 +162,35 @@ def collect_execution_telemetry(
         bytes_scanned=bytes_scanned,
         bytes_shuffled=bytes_shuffled,
         runtime_metrics=metric_values,
+    )
+
+
+def collect_execution_telemetry(
+    candidate: CandidatePlan,
+    spark: SparkSession,
+    num_cores: int = 1,
+    config: Optional[PricingConfig] = None,
+) -> ExecutionTelemetry:
+    """
+    Execute a candidate and collect ground-truth runtime telemetry.
+
+    This is an observation step, not a prediction step.
+    """
+    if num_cores <= 0:
+        raise ValueError("num_cores must be positive")
+
+    df = spark.sql(candidate.sql)
+
+    start = time.time()
+    df.collect()
+    elapsed = time.time() - start
+
+    return observe_execution_telemetry(
+        candidate=candidate,
+        dataframe=df,
+        elapsed=elapsed,
+        num_cores=num_cores,
+        config=config,
     )
 
 

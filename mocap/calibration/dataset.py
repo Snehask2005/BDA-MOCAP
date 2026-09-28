@@ -1,19 +1,21 @@
 """
-Build a calibration dataset from PlanMetrics that already have a
-ground-truth actual_cost recorded (i.e. produced by
-mocap.cost.estimator.estimate_from_execution across many runs).
+Calibration dataset utilities.
 
-Keep the queries used to build this dataset separate from whatever
-queries you use for final evaluation, to avoid leakage (see the
-plan's publication-quality rules, section 16).
+Calibration samples are created from a pre-execution PlanMetrics
+prediction paired with post-execution ExecutionTelemetry.
+
+This keeps prediction and ground truth separate and prevents
+calibration data from being generated from estimated values alone.
 """
+
 from __future__ import annotations
 
 import csv
 import os
 from typing import Iterable, List
 
-from mocap.interfaces import PlanMetrics
+from mocap.calibration.service import CalibrationSample
+
 
 _COLUMNS = [
     "plan_id",
@@ -23,47 +25,73 @@ _COLUMNS = [
     "shuffle_component",
     "estimated_cost",
     "actual_cost",
+    "estimated_latency",
+    "actual_latency",
 ]
 
 
-def append_records(metrics_list: Iterable[PlanMetrics], csv_path: str) -> None:
+def append_samples(
+    samples: Iterable[CalibrationSample],
+    csv_path: str,
+) -> None:
     """
-    Append rows for every PlanMetrics in `metrics_list` that has an
-    actual_cost recorded. Rows missing ground truth are skipped
-    (and reported) since they can't be used for calibration.
+    Append calibration observations to a CSV dataset.
     """
-    os.makedirs(os.path.dirname(csv_path) or ".", exist_ok=True)
+
+    os.makedirs(
+        os.path.dirname(csv_path) or ".",
+        exist_ok=True,
+    )
+
     file_exists = os.path.exists(csv_path)
 
     with open(csv_path, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=_COLUMNS)
+        writer = csv.DictWriter(
+            f,
+            fieldnames=_COLUMNS,
+        )
+
         if not file_exists:
             writer.writeheader()
 
-        for m in metrics_list:
-            if m.actual_cost is None:
-                print(f"Skipping {m.plan_id}: no actual_cost recorded yet")
-                continue
+        for sample in samples:
             writer.writerow(
                 {
-                    "plan_id": m.plan_id,
-                    "query_id": m.query_id,
-                    "cpu_component": m.cpu_component,
-                    "io_component": m.io_component,
-                    "shuffle_component": m.shuffle_component,
-                    "estimated_cost": m.estimated_cost,
-                    "actual_cost": m.actual_cost,
+                    "plan_id": sample.plan_id,
+                    "query_id": sample.query_id,
+                    "cpu_component": sample.cpu_component,
+                    "io_component": sample.io_component,
+                    "shuffle_component": sample.shuffle_component,
+                    "estimated_cost": sample.estimated_cost,
+                    "actual_cost": sample.actual_cost,
+                    "estimated_latency": sample.estimated_latency,
+                    "actual_latency": sample.actual_latency,
                 }
             )
 
 
 def load_dataset(csv_path: str) -> List[dict]:
+    """Load calibration observations from CSV."""
+
     with open(csv_path, "r", newline="") as f:
         reader = csv.DictReader(f)
+
         rows = []
+
         for row in reader:
             parsed = dict(row)
-            for key in ("cpu_component", "io_component", "shuffle_component", "estimated_cost", "actual_cost"):
+
+            for key in (
+                "cpu_component",
+                "io_component",
+                "shuffle_component",
+                "estimated_cost",
+                "actual_cost",
+                "estimated_latency",
+                "actual_latency",
+            ):
                 parsed[key] = float(row[key])
+
             rows.append(parsed)
+
         return rows
