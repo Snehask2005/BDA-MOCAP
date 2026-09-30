@@ -7,6 +7,8 @@ Evaluate and refresh the calibration model.
 - update_model(): retrain from the accumulated calibration dataset
   and overwrite the saved model file — call this periodically as
   more telemetry comes in.
+- generate_markdown_report(): human/paper-readable table of the same
+  numbers, no plotting dependency required.
 
 Usage:
     python -m mocap.calibration.updater [csv_path] [model_path]
@@ -78,14 +80,62 @@ def plot_estimated_vs_actual(csv_path: str, out_path: str) -> None:
     plt.close()
 
 
+def generate_markdown_report(csv_path: str, model: CalibrationModel, out_path: str) -> str:
+    """
+    Write a markdown table of per-sample predictions plus the
+    aggregate MAE/RMSE/MAPE comparison -- the "calibration tables"
+    checklist deliverable. Does not require matplotlib.
+    """
+    rows = load_dataset(csv_path)
+    report = evaluate(csv_path, model)
+
+    lines = [
+        "# Calibration Report",
+        "",
+        f"Samples: {len(rows)}",
+        "",
+        "## Accuracy (lower is better)",
+        "",
+        "| Model | MAE | RMSE | MAPE (%) |",
+        "|---|---|---|---|",
+        f"| Analytical (uncalibrated) | {report['analytical']['MAE']:.6f} | "
+        f"{report['analytical']['RMSE']:.6f} | {report['analytical']['MAPE_pct']:.2f} |",
+        f"| Calibrated | {report['calibrated']['MAE']:.6f} | "
+        f"{report['calibrated']['RMSE']:.6f} | {report['calibrated']['MAPE_pct']:.2f} |",
+        "",
+        "## Per-sample predictions",
+        "",
+        "| plan_id | query_id | estimated_cost | calibrated_cost | actual_cost |",
+        "|---|---|---|---|---|",
+    ]
+
+    for row in rows:
+        calibrated_cost = model.predict(row["cpu_component"], row["io_component"], row["shuffle_component"])
+        lines.append(
+            f"| {row['plan_id']} | {row['query_id']} | {row['estimated_cost']:.6f} | "
+            f"{calibrated_cost:.6f} | {row['actual_cost']:.6f} |"
+        )
+
+    content = "\n".join(lines) + "\n"
+
+    with open(out_path, "w") as f:
+        f.write(content)
+
+    return content
+
+
 if __name__ == "__main__":
     import sys
 
     csv_path = sys.argv[1] if len(sys.argv) > 1 else "results/calibration_dataset.csv"
     model_path = sys.argv[2] if len(sys.argv) > 2 else "results/calibration_model.json"
+    report_path = sys.argv[3] if len(sys.argv) > 3 else "results/calibration_report.md"
 
     model = update_model(csv_path, model_path)
     report = evaluate(csv_path, model)
     print("Evaluation (lower is better):")
     for name, errs in report.items():
         print(f"  {name}: MAE={errs['MAE']:.4f}  RMSE={errs['RMSE']:.4f}  MAPE={errs['MAPE_pct']:.2f}%")
+
+    generate_markdown_report(csv_path, model, report_path)
+    print(f"\nMarkdown report written to {report_path}")
