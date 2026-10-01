@@ -21,12 +21,16 @@ from mocap.calibration.dataset import load_dataset
 from mocap.cost.learned import CalibrationModel
 
 
-def train_from_csv(csv_path: str) -> CalibrationModel:
+def train_from_rows(rows) -> CalibrationModel:
     """
-    Train the learned cost model from a calibration dataset.
-    """
+    Train the learned cost model from already-loaded calibration rows.
 
-    rows = load_dataset(csv_path)
+    Each row must contain:
+        cpu_component
+        io_component
+        shuffle_component
+        actual_cost
+    """
 
     if len(rows) < 4:
         raise ValueError(
@@ -64,6 +68,16 @@ def train_from_csv(csv_path: str) -> CalibrationModel:
     return CalibrationModel(
         weights=weights,
     )
+
+
+def train_from_csv(csv_path: str) -> CalibrationModel:
+    """
+    Train the learned cost model from a calibration dataset.
+    """
+
+    rows = load_dataset(csv_path)
+
+    return train_from_rows(rows)
 
 
 if __name__ == "__main__":
