@@ -79,6 +79,20 @@ def train_from_csv(csv_path: str) -> CalibrationModel:
 
     return train_from_rows(rows)
 
+def train_and_save(
+    csv_path: str,
+    model_path: str,
+) -> CalibrationModel:
+    """
+    Train a calibration model from a CSV dataset and save it.
+    """
+
+    model = train_from_csv(csv_path)
+
+    model.save(model_path)
+
+    return model
+
 
 if __name__ == "__main__":
     import sys
