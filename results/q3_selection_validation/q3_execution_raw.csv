@@ -1,0 +1,7 @@
+workload,repetition,execution_position,plan_id,strategy,actual_latency_seconds,actual_cost,cpu_seconds,bytes_scanned,bytes_shuffled,result_row_count,fingerprint
+Q3_balanced,1,1,Q3_execution_validation_P05,join_order_c_n_o_merge,0.24747526299961464,6.5993403466563905e-06,0.4949505259992293,0.0,0.0,1000,71b26ba5e9c8213a
+Q3_balanced,1,2,Q3_execution_validation_P02,merge,0.22070623000035994,5.885499466676265e-06,0.4414124600007199,0.0,0.0,1000,9c97282f079e8f75
+Q3_balanced,2,1,Q3_execution_validation_P02,merge,0.18177563399967767,4.847350239991405e-06,0.36355126799935533,0.0,0.0,1000,9c97282f079e8f75
+Q3_balanced,2,2,Q3_execution_validation_P05,join_order_c_n_o_merge,0.23240831899965997,6.197555173324266e-06,0.46481663799931994,0.0,0.0,1000,71b26ba5e9c8213a
+Q3_balanced,3,1,Q3_execution_validation_P02,merge,0.17426548399998865,4.647079573333031e-06,0.3485309679999773,0.0,0.0,1000,9c97282f079e8f75
+Q3_balanced,3,2,Q3_execution_validation_P05,join_order_c_n_o_merge,0.1563727030006703,4.169938746684541e-06,0.3127454060013406,0.0,0.0,1000,71b26ba5e9c8213a
