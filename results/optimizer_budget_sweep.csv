@@ -1,0 +1,6 @@
+budget_label,budget,candidate_count,feasible_count,pareto_count,selected_plan,selected_strategy,expected_cost,expected_latency,best_score,constraint_time_s,pareto_time_s,ranking_time_s,total_optimizer_time_s,pareto_dominated,failure_reason
+infeasible,1e-07,12,0,0,,,,,,8.082599998715523e-05,0.0,0.0,8.2431999999244e-05,0,No candidate satisfies the budget (B = 1e-07). All 12 candidates exceed the cost limit.
+strict,2.2e-05,12,0,0,,,,,,2.325000002656452e-05,0.0,0.0,2.4282999959268636e-05,0,No candidate satisfies the budget (B = 2.2e-05). All 12 candidates exceed the cost limit.
+moderate,4e-05,12,6,2,BUDGET_SWEEP_Q1_P05,BroadcastHashJoin,3.933986007862292e-05,0.75101806640625,0.5,2.4024000026656722e-05,0.0001003660000264972,5.820800004130433e-05,0.0002325620000078743,4,
+relaxed,0.0001,12,8,2,BUDGET_SWEEP_Q1_P05,BroadcastHashJoin,3.933986007862292e-05,0.75101806640625,0.5,2.1810000021105225e-05,4.469300000664589e-05,2.8902999986257782e-05,0.00010879199999180855,6,
+generous,1.0,12,12,2,BUDGET_SWEEP_Q1_P05,BroadcastHashJoin,3.933986007862292e-05,0.75101806640625,0.5,1.5699000016411446e-05,3.405300003578304e-05,2.1821000018462655e-05,8.067999999639142e-05,10,
