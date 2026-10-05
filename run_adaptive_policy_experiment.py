@@ -29,6 +29,7 @@ import csv
 import dataclasses
 import json
 import os
+import statistics
 import time
 
 from pyspark.sql import SparkSession
@@ -48,6 +49,13 @@ LOG_PATH = "results/execution_log.jsonl"
 SIZES = (100_000, 1_000_000, 10_000_000)   # n, c, o row counts
 NUM_CORES = 2
 
+# Methodology: the first run pays JVM warm-up, so it is discarded.
+WARMUP_RUNS = 1
+BASELINE_RUNS = 3      # baseline cost = median of these
+REPS = 3                # repetitions per scenario (set 1 for a quick check)
+TOLERANCES = (1.0, 1.5)  # adaptive overrun_tolerance values to compare
+CONFIGS = [("strict", None)] + [("adaptive", t) for t in TOLERANCES]
+
 # Fractions of the MEASURED strict-run cost.
 BUDGET_LEVELS = {
     "relaxed": 2.0,
@@ -56,7 +64,7 @@ BUDGET_LEVELS = {
 }
 
 FIELDNAMES = [
-    "scenario", "policy", "budget", "baseline_cost",
+    "scenario", "policy", "tolerance", "rep", "budget", "baseline_cost",
     "adaptive_action", "final_plan_id", "final_mode",
     "actual_cost", "cancelled_partial_cost", "total_cost",
     "wall_time_s", "within_budget",
@@ -94,8 +102,8 @@ def create_query(spark: SparkSession) -> QueryRequest:
             JOIN adp_c c ON n.n_id = c.c_id
             JOIN adp_o o ON c.c_id = o.o_id
         """,
-        budget=100.0,        # relaxed PLANNING budget; runtime budgets set below
-        deadline=100.0,
+        budget=1e9,          # planning must not filter anything out;
+        deadline=None,       # runtime budgets are applied later per scenario
         accuracy_tolerance=0.0,
     )
 
@@ -108,7 +116,8 @@ def read_log(path: str) -> list[dict]:
 
 
 def run_scenario(
-    spark, executor, planned, label, policy, budget, baseline_cost,
+    spark, executor, planned, label, policy, tolerance, rep, budget,
+    baseline_cost,
 ):
     plan = dataclasses.replace(planned.selected_plan, budget=budget)
     log_start = len(read_log(LOG_PATH))
@@ -123,6 +132,7 @@ def run_scenario(
             spark=spark,
             config=AdaptiveConfig(
                 poll_interval_s=0.5,
+                overrun_tolerance=tolerance,
                 min_elapsed_s=1.0,
                 min_progress=0.05,
                 measure_accuracy=True,   # evaluation-only extra counts
@@ -142,6 +152,8 @@ def run_scenario(
     return {
         "scenario": label,
         "policy": policy,
+        "tolerance": "" if tolerance is None else tolerance,
+        "rep": rep,
         "budget": budget,
         "baseline_cost": baseline_cost,
         "adaptive_action": rm.get("adaptive_action", "none"),
@@ -183,7 +195,14 @@ def main() -> None:
         planned = pipeline.run(query)
 
         if planned.selected_plan is None:
-            raise SystemExit(f"Planning failed: {planned.failure_reason}")
+            print(f"Planning failed: {planned.failure_reason}")
+            print(f"candidates generated: {len(planned.candidates)}")
+            for pid, m in planned.metrics.items():
+                print(
+                    f"  {pid}: est_cost={m.estimated_cost:.8f} "
+                    f"est_latency={m.estimated_latency:.3f}s"
+                )
+            raise SystemExit(1)
 
         executor = SparkExecutor(
             spark,
@@ -192,14 +211,24 @@ def main() -> None:
             allow_simulation=False,
         )
 
-        print("\nMeasuring strict baseline (one real execution)...")
-        baseline = executor.execute(
-            planned.selected_plan, mode="strict", split="eval"
-        )
-        baseline_cost = baseline.actual_cost
+        print("\nWarming up and measuring strict baseline...")
+        for _ in range(WARMUP_RUNS):
+            executor.execute(
+                planned.selected_plan, mode="strict", split="warmup"
+            )
+
+        baseline_runs = [
+            executor.execute(
+                planned.selected_plan, mode="strict", split="eval"
+            )
+            for _ in range(BASELINE_RUNS)
+        ]
+        baseline_cost = statistics.median(r.actual_cost for r in baseline_runs)
         print(
-            f"baseline: plan={baseline.plan_id} "
-            f"cost={baseline_cost:.8f} latency={baseline.actual_latency:.2f}s"
+            f"baseline: plan={baseline_runs[0].plan_id} "
+            f"median cost={baseline_cost:.8f} "
+            f"costs={[round(r.actual_cost, 8) for r in baseline_runs]} "
+            f"latencies={[round(r.actual_latency, 2) for r in baseline_runs]}"
         )
 
         rows = []
@@ -211,21 +240,22 @@ def main() -> None:
         for label, factor in BUDGET_LEVELS.items():
             budget = baseline_cost * factor
 
-            for policy in ("strict", "adaptive"):
-                row = run_scenario(
-                    spark, executor, planned,
-                    label, policy, budget, baseline_cost,
-                )
-                rows.append(row)
+            for policy, tol in CONFIGS:
+                for rep_i in range(REPS):
+                    row = run_scenario(
+                        spark, executor, planned,
+                        label, policy, tol, rep_i, budget, baseline_cost,
+                    )
+                    rows.append(row)
 
-                print(
-                    f"{label:9s} {policy:8s} "
-                    f"budget={budget:.8f} "
-                    f"action={row['adaptive_action']:9s} "
-                    f"total={row['total_cost']:.8f} "
-                    f"ok={row['within_budget']} "
-                    f"log={row['statuses']}"
-                )
+                    print(
+                        f"{label:9s} {policy:8s} tol={str(tol):4s} "
+                        f"rep={rep_i} budget={budget:.8f} "
+                        f"action={row['adaptive_action']:9s} "
+                        f"total={row['total_cost']:.8f} "
+                        f"ok={row['within_budget']} "
+                        f"log={row['statuses']}"
+                    )
 
         os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
 
