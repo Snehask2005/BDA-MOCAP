@@ -87,17 +87,20 @@ class DecisionEngine:
         alpha: float = 0.5,  # Latency weight in scalarization
         beta: float = 0.5,   # Cost weight in scalarization
         eps: float = 1e-9,
+        lagrangian_lambda: float = 1.0,
     ) -> None:
         self.policy = policy
         self.alpha = alpha
         self.beta = beta
         self.eps = eps
+        self.lagrangian_lambda = lagrangian_lambda
 
     def select(
         self,
         frontier: Sequence[ParetoPlan],
         budget: float,
         deadline: Optional[float] = None,
+        lagrangian_lambda: Optional[float] = None,
     ) -> DecisionOutcome:
         if not frontier:
             raise ValueError("Cannot select from an empty Pareto frontier")
@@ -111,7 +114,8 @@ class DecisionEngine:
         elif self.policy == DecisionPolicyType.CHEAPEST_FEASIBLE:
             return self._select_cheapest(plans, budget, deadline)
         elif self.policy == DecisionPolicyType.LEGACY_LAGRANGIAN_ABLATION:
-            return self._select_legacy_lagrangian(plans, budget, deadline)
+            lam = lagrangian_lambda if lagrangian_lambda is not None else self.lagrangian_lambda
+            return self._select_legacy_lagrangian(plans, budget, deadline, lambda_mult=lam)
         else:
             raise ValueError(f"Unknown decision policy: {self.policy}")
 

@@ -1,0 +1,14 @@
+{
+  "total_experiment_records": 512,
+  "total_queries": 16,
+  "avg_total_planning_time_ms": 0.12567753401526716,
+  "avg_pareto_extraction_time_ms": 0.01895110814503449,
+  "pareto_latency_criterion_satisfied (<50ms)": true,
+  "lagrangian_collapse_evaluations": 32,
+  "lagrangian_identical_plan_selections": 32,
+  "lagrangian_collapse_percentage": 100.0,
+  "mathematical_inertness_confirmed": true,
+  "infeasible_mode_1_validated": true,
+  "infeasible_mode_2_validated": true,
+  "infeasible_mode_3_validated": true
+}

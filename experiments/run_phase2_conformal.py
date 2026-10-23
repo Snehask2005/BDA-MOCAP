@@ -19,8 +19,11 @@ import json
 import math
 import os
 import random
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from selector.bounds import ConformalBoundsComputer, IntervalFilter, PlanBounds
 from selector.conformal import CalibrationSample, ConformalCalibrator, ConformalQuantile
