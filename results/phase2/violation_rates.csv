@@ -1,0 +1,5 @@
+budget_multiplier,total_queries,point_admitted,point_violations,point_violation_rate,conformal_admitted,conformal_violations,conformal_violation_rate,violation_rate_reduction_percent
+1.0,15,4,3,0.75,0,0,0.0,100.0
+1.2,15,10,4,0.4,0,0,0.0,100.0
+1.5,15,13,2,0.15384615384615385,0,0,0.0,100.0
+2.0,15,15,0,0.0,9,0,0.0,0.0
