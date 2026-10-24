@@ -1,0 +1,6 @@
+query_id,mode,beam_width,candidate_sql_count,unique_physical_plans,best_candidate,best_fingerprint,best_median_latency_seconds,pruning_loss_percent,exhaustive_best_retained,repetitions_per_unique_plan,warmups_per_unique_plan
+BEAM_STAR_4,exhaustive,,12,12,join_order_b_f_c_a,afed8b867ca42705,0.06607248350064765,0.0,True,20,1
+BEAM_STAR_4,beam_2,2,3,3,join_order_a_f_b_c,6dff7c5098748da3,0.06677899599981174,1.0692991419902753,False,20,1
+BEAM_STAR_4,beam_3,3,4,4,join_order_a_f_b_c,6dff7c5098748da3,0.06677899599981174,1.0692991419902753,False,20,1
+BEAM_STAR_4,beam_5,5,5,5,join_order_a_f_b_c,6dff7c5098748da3,0.06677899599981174,1.0692991419902753,False,20,1
+BEAM_STAR_4,beam_10,10,10,10,join_order_b_f_c_a,afed8b867ca42705,0.06607248350064765,0.0,True,20,1

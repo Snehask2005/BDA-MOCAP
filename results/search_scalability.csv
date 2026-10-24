@@ -1,0 +1,22 @@
+table_count,search_mode,beam_width,valid_orders_generated,generation_median_ms,generation_p95_ms,repetitions,warmups,scoring
+3,exhaustive,,3,1.5425,1.9233,30,3,exhaustive reference
+3,beam,10,3,1.2972,1.8095,30,3,synthetic size-based heuristic
+3,beam,20,3,1.3117,2.1108,30,3,synthetic size-based heuristic
+3,beam,50,3,1.4271,1.9076,30,3,synthetic size-based heuristic
+4,exhaustive,,7,7.3002,8.6398,30,3,exhaustive reference
+4,beam,10,7,3.8786,4.4431,30,3,synthetic size-based heuristic
+4,beam,20,7,3.6455,4.5725,30,3,synthetic size-based heuristic
+4,beam,50,7,3.8298,6.2212,30,3,synthetic size-based heuristic
+5,exhaustive,,15,38.0249,46.3832,30,3,exhaustive reference
+5,beam,10,10,6.2437,7.7607,30,3,synthetic size-based heuristic
+5,beam,20,15,9.6089,11.3101,30,3,synthetic size-based heuristic
+5,beam,50,15,9.6268,10.672,30,3,synthetic size-based heuristic
+6,beam,10,10,7.5508,8.3937,30,3,synthetic size-based heuristic
+6,beam,20,20,14.1173,16.3788,30,3,synthetic size-based heuristic
+6,beam,50,31,22.9364,33.6202,30,3,synthetic size-based heuristic
+8,beam,10,10,10.5267,13.2032,30,3,synthetic size-based heuristic
+8,beam,20,20,21.2622,34.7605,30,3,synthetic size-based heuristic
+8,beam,50,50,52.4643,77.2253,30,3,synthetic size-based heuristic
+10,beam,10,10,12.4515,15.2266,30,3,synthetic size-based heuristic
+10,beam,20,20,26.7209,38.2322,30,3,synthetic size-based heuristic
+10,beam,50,50,63.2152,83.2781,30,3,synthetic size-based heuristic
