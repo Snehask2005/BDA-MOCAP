@@ -119,3 +119,28 @@ def test_beam_mode_rejects_invalid_width():
             search_mode="beam",
             beam_width=0,
         )
+
+
+def test_reordering_skips_multi_relation_join_predicates():
+    query = QueryRequest(
+        query_id="BEAM_MULTIRELATION_PREDICATE",
+        sql="""
+            SELECT a.id
+            FROM table_a a
+            JOIN table_b b ON a.id = b.a_id
+            JOIN table_c c
+              ON a.id = c.a_id AND b.id = c.b_id
+        """,
+        budget=100.0,
+    )
+
+    assert _generate_join_order_variants(
+        query,
+        search_mode="exhaustive",
+    ) == []
+
+    assert _generate_join_order_variants(
+        query,
+        search_mode="beam",
+        beam_width=10,
+    ) == []

@@ -476,7 +476,7 @@ def _generate_join_order_variants(
 
         condition_aliases = _join_condition_aliases(condition)
 
-        if condition is not None and len(condition_aliases) < 2:
+        if condition is not None and len(condition_aliases) != 2:
             return []
 
         join_edges.append(
