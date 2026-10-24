@@ -126,3 +126,27 @@ def test_rejects_non_finite_score():
             {"a": set()},
             score_prefix=lambda _order: float("nan"),
         )
+
+
+def test_preserves_starting_relation_diversity():
+    aliases = ("f", "a", "b", "c")
+    adjacency = {
+        "f": {"a", "b", "c"},
+        "a": {"f"},
+        "b": {"f"},
+        "c": {"f"},
+    }
+
+    def scorer(order):
+        # Deliberately ranks fact-first paths poorly to test diversity.
+        return 100.0 if order[0] == "f" else float(len(order))
+
+    orders = beam_search_join_orders(
+        aliases,
+        adjacency,
+        score_prefix=scorer,
+        beam_width=4,
+    )
+
+    assert len(orders) == 4
+    assert {order[0] for order in orders} == set(aliases)

@@ -8,6 +8,41 @@ JoinOrder = tuple[str, ...]
 PrefixScorer = Callable[[JoinOrder], float]
 
 
+
+def _select_diverse_beam(
+    scored_orders: Iterable[tuple[JoinOrder, float]],
+    beam_width: int,
+) -> list[tuple[JoinOrder, float]]:
+    """Keep promising states while preserving distinct starting relations."""
+    ranked = sorted(
+        scored_orders,
+        key=lambda item: (item[1], item[0]),
+    )
+
+    # Find the best partial order for each starting relation.
+    best_by_start: dict[str, tuple[JoinOrder, float]] = {}
+    for item in ranked:
+        best_by_start.setdefault(item[0][0], item)
+
+    # Retain the best representatives across different starting relations.
+    representatives = sorted(
+        best_by_start.values(),
+        key=lambda item: (item[1], item[0]),
+    )[:beam_width]
+
+    selected = list(representatives)
+    selected_orders = {order for order, _ in selected}
+
+    # Fill unused slots with the best remaining candidates.
+    for item in ranked:
+        if len(selected) >= beam_width:
+            break
+        if item[0] not in selected_orders:
+            selected.append(item)
+            selected_orders.add(item[0])
+
+    return sorted(selected, key=lambda item: (item[1], item[0]))
+
 def beam_search_join_orders(
     aliases: Sequence[str],
     adjacency: Mapping[str, Iterable[str]],
@@ -86,8 +121,7 @@ def beam_search_join_orders(
         for alias in aliases
     ]
 
-    beam.sort(key=lambda item: (item[1], item[0]))
-    beam = beam[:beam_width]
+    beam = _select_diverse_beam(beam, beam_width)
 
     # Extend each retained partial order by one connected relation.
     for target_size in range(2, len(aliases) + 1):
@@ -119,10 +153,10 @@ def beam_search_join_orders(
             if previous is None or score < previous:
                 best_for_order[order] = score
 
-        beam = sorted(
+        beam = _select_diverse_beam(
             best_for_order.items(),
-            key=lambda item: (item[1], item[0]),
-        )[:beam_width]
+            beam_width,
+        )
 
         if not all(len(order) == target_size for order, _ in beam):
             raise RuntimeError("Internal beam-search depth invariant failed")
