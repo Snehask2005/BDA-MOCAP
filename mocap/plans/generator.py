@@ -21,6 +21,10 @@ from mocap.plans.representation import (
     extract_physical_plan_features,
 )
 from mocap.plans.beam_search import beam_search_join_orders
+from mocap.plans.search_statistics import (
+    JoinSearchStatistics,
+    build_cardinality_scorer,
+)
 
 
 def get_physical_plan(df) -> str:
@@ -421,6 +425,7 @@ def _generate_join_order_variants(
     search_mode: str = "exhaustive",
     beam_width: int = 20,
     table_size_estimates: Mapping[str, float] | None = None,
+    join_search_statistics: JoinSearchStatistics | None = None,
 ) -> List[tuple[str, str]]:
     """Generate valid left-deep join-order alternatives.
 
@@ -505,14 +510,25 @@ def _generate_join_order_variants(
             for alias in connected:
                 adjacency[alias].update(connected - {alias})
 
+        score_prefix = build_cardinality_scorer(
+            aliases,
+            adjacency,
+            join_search_statistics,
+        )
+
+        if score_prefix is None:
+            score_prefix = _size_only_prefix_scorer(
+                aliases,
+                table_size_estimates,
+            )
+
+        # Request one extra order because the original order may be
+        # included in the beam and is removed from alternative variants.
         candidate_orders = beam_search_join_orders(
             aliases,
             adjacency,
-            score_prefix=_size_only_prefix_scorer(
-                aliases,
-                table_size_estimates,
-            ),
-            beam_width=beam_width,
+            score_prefix=score_prefix,
+            beam_width=beam_width + 1,
         )
 
     variants: List[tuple[str, str]] = []
@@ -538,6 +554,9 @@ def _generate_join_order_variants(
         label = "join_order_" + "_".join(order)
         variants.append((label, sql))
 
+        if search_mode == "beam" and len(variants) >= beam_width:
+            break
+
     return variants
 
 
@@ -548,6 +567,7 @@ def _generate_all_sql_variants(
     search_mode: str = "exhaustive",
     beam_width: int = 20,
     table_size_estimates: Mapping[str, float] | None = None,
+    join_search_statistics: JoinSearchStatistics | None = None,
 ) -> List[tuple[str, str]]:
     """Generate base strategy variants and join-order strategy variants."""
     if search_mode not in {"exhaustive", "beam"}:
@@ -563,6 +583,7 @@ def _generate_all_sql_variants(
         search_mode=search_mode,
         beam_width=beam_width,
         table_size_estimates=table_size_estimates,
+        join_search_statistics=join_search_statistics,
     )
 
     for order_label, order_sql in join_orders:
@@ -596,6 +617,7 @@ def generate_join_candidates(
     *,
     search_mode: str = "exhaustive",
     beam_width: int = 20,
+    join_search_statistics: JoinSearchStatistics | None = None,
 ) -> List[CandidatePlan]:
     """
     Generate alternative physical-plan candidates.
@@ -629,6 +651,7 @@ def generate_join_candidates(
         search_mode=search_mode,
         beam_width=beam_width,
         table_size_estimates=table_size_estimates,
+        join_search_statistics=join_search_statistics,
     )
 
     unique_plans = {}

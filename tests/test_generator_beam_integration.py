@@ -144,3 +144,25 @@ def test_reordering_skips_multi_relation_join_predicates():
         search_mode="beam",
         beam_width=10,
     ) == []
+
+
+def test_beam_width_limits_alternative_orders_not_original_query():
+    query = make_six_table_query()
+
+    variants = _generate_join_order_variants(
+        query,
+        search_mode="beam",
+        beam_width=5,
+        table_size_estimates={
+            "a": 1000.0,
+            "b": 100.0,
+            "c": 20.0,
+            "d": 5.0,
+            "e": 10.0,
+            "f": 500.0,
+        },
+    )
+
+    assert len(variants) == 5
+    labels = [label for label, _sql in variants]
+    assert len(labels) == len(set(labels))
