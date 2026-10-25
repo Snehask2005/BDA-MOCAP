@@ -148,6 +148,22 @@ def test_generate_join_candidates_uses_real_spark_plans():
             spark,
         )
 
+        parallel_candidates = generate_join_candidates(
+            query,
+            spark,
+            candidate_workers=2,
+        )
+
+        def candidate_signature(plans):
+            return [
+                (c.plan_id, c.strategy, c.fingerprint, c.sql)
+                for c in plans
+            ]
+
+        assert candidate_signature(parallel_candidates) == (
+            candidate_signature(candidates)
+        )
+
         assert len(candidates) >= 2
 
         # Every candidate must have a real physical plan and

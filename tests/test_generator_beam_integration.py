@@ -166,3 +166,16 @@ def test_beam_width_limits_alternative_orders_not_original_query():
     assert len(variants) == 5
     labels = [label for label, _sql in variants]
     assert len(labels) == len(set(labels))
+
+def test_generate_join_candidates_rejects_invalid_candidate_workers():
+    from mocap.plans.generator import generate_join_candidates
+
+    query = make_six_table_query()
+
+    for workers in (0, -1, True, 1.5):
+        with pytest.raises(ValueError, match="candidate_workers"):
+            generate_join_candidates(
+                query,
+                spark=None,
+                candidate_workers=workers,
+            )
