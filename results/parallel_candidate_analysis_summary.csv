@@ -1,0 +1,7 @@
+search_mode,beam_width,candidate_workers,candidate_count,repetitions,median_seconds,min_seconds,max_seconds,speedup_vs_sequential,reduction_vs_sequential_percent,outputs_match_sequential
+exhaustive,,1,144,3,2.114204,2.076838,2.306903,1.0000,0.00,True
+exhaustive,,2,144,3,1.191935,1.138417,1.393985,1.7738,43.62,True
+exhaustive,,4,144,3,0.771658,0.767763,0.938149,2.7398,63.50,True
+beam_10,10,1,33,3,0.501400,0.452345,0.541391,1.0000,0.00,True
+beam_10,10,2,33,3,0.276753,0.271683,0.377719,1.8117,44.80,True
+beam_10,10,4,33,3,0.185171,0.181881,0.201034,2.7078,63.07,True

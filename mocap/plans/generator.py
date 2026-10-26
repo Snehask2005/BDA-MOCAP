@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import itertools
 import math
 from collections.abc import Mapping
@@ -618,6 +619,7 @@ def generate_join_candidates(
     search_mode: str = "exhaustive",
     beam_width: int = 20,
     join_search_statistics: JoinSearchStatistics | None = None,
+    candidate_workers: int = 1,
 ) -> List[CandidatePlan]:
     """
     Generate alternative physical-plan candidates.
@@ -625,7 +627,9 @@ def generate_join_candidates(
     Candidate generation is delegated to Spark/Catalyst: MOCAP supplies
     controlled SQL alternatives and extracts the resulting physical plans.
 
-    No candidate query is executed here.
+    No candidate query is executed here. ``candidate_workers`` controls
+    bounded concurrent physical-plan analysis; the default of 1 preserves
+    sequential analysis. Deduplication and candidate IDs remain ordered.
     """
 
     if search_mode not in {"exhaustive", "beam"}:
@@ -639,6 +643,13 @@ def generate_join_candidates(
         or beam_width < 1
     ):
         raise ValueError("beam_width must be a positive integer")
+
+    if (
+        not isinstance(candidate_workers, int)
+        or isinstance(candidate_workers, bool)
+        or candidate_workers < 1
+    ):
+        raise ValueError("candidate_workers must be a positive integer")
 
     table_size_estimates = (
         _estimate_table_size_bytes(query, spark)
@@ -654,28 +665,42 @@ def generate_join_candidates(
         join_search_statistics=join_search_statistics,
     )
 
+    def analyze_variant(item):
+        strategy, sql = item
+        try:
+            dataframe = spark.sql(sql)
+            physical_plan = get_physical_plan(dataframe)
+            fingerprint = create_plan_fingerprint(physical_plan)
+            return strategy, sql, physical_plan, fingerprint, None
+        except Exception as exc:
+            return strategy, sql, None, None, exc
+
+    if candidate_workers == 1:
+        analyses = [
+            analyze_variant(item)
+            for item in sql_variants
+        ]
+    else:
+        with ThreadPoolExecutor(max_workers=candidate_workers) as executor:
+            # executor.map preserves input order even when tasks finish
+            # in a different order.
+            analyses = list(executor.map(analyze_variant, sql_variants))
+
     unique_plans = {}
     plan_counter = 1
 
-    for strategy, sql in sql_variants:
+    for strategy, sql, physical_plan, fingerprint, analysis_error in analyses:
+        if analysis_error is not None:
+            print(
+                f"Skipping strategy '{strategy}': {analysis_error}"
+            )
+            continue
+
+        if fingerprint in unique_plans:
+            continue
 
         try:
-            df = spark.sql(sql)
-
-            physical_plan = get_physical_plan(
-                df
-            )
-
-            fingerprint = create_plan_fingerprint(
-                physical_plan
-            )
-
-            if fingerprint in unique_plans:
-                continue
-
-            features = extract_physical_plan_features(
-                physical_plan
-            )
+            features = extract_physical_plan_features(physical_plan)
 
             plan_id = (
                 f"{query.query_id}_P"
@@ -691,35 +716,16 @@ def generate_join_candidates(
                 sql=sql,
                 physical_plan=physical_plan,
                 fingerprint=fingerprint,
-
-                actual_join_strategy=(
-                    features.actual_join_strategy
-                ),
-
+                actual_join_strategy=features.actual_join_strategy,
                 num_joins=features.num_joins,
-                num_broadcast_joins=(
-                    features.num_broadcast_joins
-                ),
-                num_shuffle_hash_joins=(
-                    features.num_shuffle_hash_joins
-                ),
-                num_sort_merge_joins=(
-                    features.num_sort_merge_joins
-                ),
-                num_nested_loop_joins=(
-                    features.num_nested_loop_joins
-                ),
-
-                num_exchanges=(
-                    features.num_exchanges
-                ),
-                num_broadcast_exchanges=(
-                    features.num_broadcast_exchanges
-                ),
+                num_broadcast_joins=features.num_broadcast_joins,
+                num_shuffle_hash_joins=features.num_shuffle_hash_joins,
+                num_sort_merge_joins=features.num_sort_merge_joins,
+                num_nested_loop_joins=features.num_nested_loop_joins,
+                num_exchanges=features.num_exchanges,
+                num_broadcast_exchanges=features.num_broadcast_exchanges,
                 num_sorts=features.num_sorts,
-                num_aggregates=(
-                    features.num_aggregates
-                ),
+                num_aggregates=features.num_aggregates,
                 num_filters=features.num_filters,
                 num_scans=features.num_scans,
                 plan_depth=features.plan_depth,
@@ -729,10 +735,7 @@ def generate_join_candidates(
 
         except Exception as exc:
             print(
-                f"Skipping strategy "
-                f"'{strategy}': {exc}"
+                f"Skipping strategy '{strategy}': {exc}"
             )
 
-    return list(
-        unique_plans.values()
-    )
+    return list(unique_plans.values())
