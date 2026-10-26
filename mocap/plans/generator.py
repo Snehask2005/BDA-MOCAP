@@ -218,6 +218,8 @@ def _build_join_order_sql(
             str,
         ]
     ],
+    *,
+    tree_template: exp.Expression | None = None,
 ) -> str:
     """
     Build one SQL query with a requested left-deep join order.
@@ -228,7 +230,13 @@ def _build_join_order_sql(
     Only INNER JOIN semantics are supported here.
     """
 
-    tree = sqlglot.parse_one(query.sql)
+    # Reuse the already-parsed query structure when available.
+    # Always copy it because constructing a candidate mutates the AST.
+    tree = (
+        tree_template.copy()
+        if tree_template is not None
+        else sqlglot.parse_one(query.sql)
+    )
 
     if not order:
         raise ValueError("Join order cannot be empty.")
@@ -420,6 +428,9 @@ def _size_only_prefix_scorer(
     return score_prefix
 
 
+
+
+
 def _generate_join_order_variants(
     query: QueryRequest,
     *,
@@ -496,7 +507,7 @@ def _generate_join_order_variants(
     original_order = aliases
 
     if search_mode == "exhaustive":
-        # Preserve the previous reference implementation.
+        # Preserve the existing reference implementation.
         if len(aliases) > 5:
             return []
         candidate_orders = itertools.permutations(aliases)
@@ -548,6 +559,7 @@ def _generate_join_order_variants(
                 order=order,
                 tables_by_alias=tables_by_alias,
                 join_edges=join_edges,
+                tree_template=tree,
             )
         except ValueError:
             continue
