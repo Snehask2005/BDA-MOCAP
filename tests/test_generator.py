@@ -290,3 +290,42 @@ def test_three_table_query_generates_strategy_variants() -> None:
     assert "join_order_n_c_o_broadcast" in labels
     assert "join_order_n_c_o_merge" in labels
     assert "join_order_n_c_o_shuffle_hash" in labels
+
+
+def test_join_order_ast_reuse_preserves_generated_sql(monkeypatch):
+    import mocap.plans.generator as generator
+    from mocap.query.parser import QueryRequest
+
+    query = QueryRequest(
+        query_id="ast_reuse_test",
+        sql="""
+            SELECT a.id, c.amount
+            FROM alpha AS a
+            INNER JOIN beta AS b ON a.id = b.alpha_id
+            INNER JOIN gamma AS c ON b.id = c.beta_id
+            WHERE c.amount > 10
+        """,
+        budget=100.0,
+    )
+
+    # Generate variants using the parsed AST template.
+    reused_variants = generator._generate_join_order_variants(query)
+
+    # Reproduce the previous behavior by reparsing the original SQL
+    # separately for each candidate.
+    original_builder = generator._build_join_order_sql
+
+    def reparsing_builder(*args, **kwargs):
+        kwargs.pop("tree_template", None)
+        return original_builder(*args, **kwargs)
+
+    monkeypatch.setattr(
+        generator,
+        "_build_join_order_sql",
+        reparsing_builder,
+    )
+
+    reparsed_variants = generator._generate_join_order_variants(query)
+
+    assert reused_variants == reparsed_variants
+    assert len(reused_variants) > 0
