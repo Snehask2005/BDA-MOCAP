@@ -1,0 +1,17 @@
+query_file,table_count,join_count,mode,candidate_analysis_limit,generated_sql_variant_count,analyzed_sql_variant_count,unique_physical_plan_count,measured_repetitions,median_table_statistics_seconds,median_sql_variant_generation_seconds,median_prescoring_seconds,median_spark_analysis_seconds,median_total_planning_seconds,planning_time_saved_percent_vs_baseline,runs_with_analysis_errors,query_execution_performed
+q03_3_tables.sql,3,2,baseline,,16,16,12,3,0.009119,0.004038,0.000000,0.135982,0.148711,0.00,0,False
+q03_3_tables.sql,3,2,prescore_48,48,16,16,12,3,0.009109,0.004177,0.000002,0.135392,0.147965,0.50,0,False
+q04_4_tables.sql,4,3,baseline,,48,48,36,3,0.012102,0.012813,0.000000,0.471575,0.496464,0.00,0,False
+q04_4_tables.sql,4,3,prescore_48,48,48,48,36,3,0.012564,0.013299,0.000002,0.451656,0.477525,3.81,0,False
+q05_5_tables.sql,5,4,baseline,,164,164,123,3,0.012584,0.048763,0.000000,1.792962,1.851165,0.00,0,False
+q05_5_tables.sql,5,4,prescore_48,48,164,48,46,3,0.010801,0.047830,0.076602,0.503644,0.639118,65.47,0,False
+q06_6_tables.sql,6,5,baseline,,164,164,123,3,0.014634,0.056080,0.000000,2.067835,2.148734,0.00,0,False
+q06_6_tables.sql,6,5,prescore_48,48,164,48,46,3,0.011944,0.061932,0.092101,0.577872,0.752224,64.99,0,False
+q07_7_tables.sql,7,6,baseline,,164,164,123,3,0.018704,0.070888,0.000000,5.984268,6.088927,0.00,0,False
+q07_7_tables.sql,7,6,prescore_48,48,164,48,46,3,0.017426,0.064243,0.096385,0.970644,1.150767,81.10,0,False
+q08_8_tables.sql,8,7,baseline,,164,164,123,3,0.020085,0.073484,0.000000,8.109568,8.203138,0.00,0,False
+q08_8_tables.sql,8,7,prescore_48,48,164,48,46,3,0.018250,0.075313,0.108805,1.052901,1.251847,84.74,0,False
+q09_9_tables.sql,9,8,baseline,,164,164,123,3,0.018973,0.084011,0.000000,10.089466,10.195427,0.00,0,False
+q09_9_tables.sql,9,8,prescore_48,48,164,48,46,3,0.020545,0.082619,0.117688,2.969995,3.189725,68.71,0,False
+q10_10_tables.sql,10,9,baseline,,164,164,123,3,0.022282,0.092938,0.000000,10.144494,10.260747,0.00,0,False
+q10_10_tables.sql,10,9,prescore_48,48,164,48,46,3,0.024063,0.086154,0.129924,2.968556,3.211898,68.70,0,False

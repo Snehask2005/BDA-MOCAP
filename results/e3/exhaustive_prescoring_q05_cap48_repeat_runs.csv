@@ -1,0 +1,7 @@
+configuration,repetition,planning_seconds,unique_physical_plans,target_retained
+exhaustive,1,5.495400610000161,144,True
+exhaustive,2,2.866376358999787,144,True
+exhaustive,3,2.6555709990000196,144,True
+beam40_cap48,1,0.7224597150000136,46,True
+beam40_cap48,2,0.6440925089998473,46,True
+beam40_cap48,3,0.6199468859999797,46,True

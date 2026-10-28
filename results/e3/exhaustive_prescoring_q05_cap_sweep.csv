@@ -1,0 +1,8 @@
+cap,unique_plans,known_measured_plans,target_retained,planning_seconds,best_strategy,best_fingerprint,best_median_seconds,loss_percent,meets_3_percent
+20,19,19,False,1.6171518939999032,join_order_d_ss_cd_i_s_broadcast,83d8b104de5d8654,0.125814,9.569261317123301,False
+24,23,23,False,0.7648152209999353,join_order_d_ss_cd_i_s_broadcast,83d8b104de5d8654,0.125814,9.569261317123301,False
+28,27,27,False,0.8007921729999907,join_order_d_ss_cd_i_s_broadcast,83d8b104de5d8654,0.125814,9.569261317123301,False
+32,31,31,False,0.7245306769999615,join_order_d_ss_cd_i_s_broadcast,83d8b104de5d8654,0.125814,9.569261317123301,False
+36,35,35,False,0.722660888000064,join_order_d_ss_cd_i_s_broadcast,83d8b104de5d8654,0.125814,9.569261317123301,False
+40,39,39,False,0.7471731740000678,join_order_d_ss_cd_i_s_broadcast,83d8b104de5d8654,0.125814,9.569261317123301,False
+48,46,46,True,0.8540550300000405,join_order_ss_i_cd_s_d_broadcast,7b045df9307ed645,0.114826,0.0,True
