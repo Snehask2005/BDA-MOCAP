@@ -431,6 +431,144 @@ def _size_only_prefix_scorer(
 
 
 
+def _sql_table_order(sql: str) -> tuple[str, ...]:
+    """Extract table aliases in FROM/JOIN order from generated SQL."""
+    tree = sqlglot.parse_one(sql)
+    from_clause = tree.args.get("from_")
+
+    if from_clause is None or not isinstance(from_clause.this, exp.Table):
+        raise ValueError("Cannot extract a simple table order from candidate SQL")
+
+    order = [_table_alias(from_clause.this)]
+
+    for join in tree.args.get("joins") or []:
+        if not isinstance(join.this, exp.Table):
+            raise ValueError("Cannot extract a simple table order from candidate SQL")
+        order.append(_table_alias(join.this))
+
+    return tuple(order)
+
+
+def _pre_score_sql_variants(
+    sql_variants: List[tuple[str, str]],
+    *,
+    aliases: tuple[str, ...],
+    table_size_estimates: Mapping[str, float] | None,
+    candidate_analysis_limit: int,
+) -> List[tuple[str, str]]:
+    """Prioritize broadcast variants while diversifying join-order coverage.
+
+    Base strategy variants are retained. The remaining analysis budget first
+    covers distinct join orders with their broadcast variants, prioritizing
+    distinct starting relations and then the existing table-size score.
+    Remaining slots are filled with unhinted, merge, and shuffle-hash
+    alternatives. This is a cheap heuristic, not a latency predictor.
+    """
+    # Avoid scoring overhead when the generated set already fits the budget.
+    if len(sql_variants) <= candidate_analysis_limit:
+        return sql_variants
+
+    base_indices = {
+        index
+        for index, (strategy, _sql) in enumerate(sql_variants)
+        if not strategy.startswith("join_order_")
+    }
+
+    if len(base_indices) > candidate_analysis_limit:
+        raise ValueError(
+            "candidate_analysis_limit is too small to retain base strategies"
+        )
+
+    order_groups: dict[tuple[str, ...], list[int]] = {}
+
+    for index, (strategy, sql) in enumerate(sql_variants):
+        if strategy.startswith("join_order_"):
+            order = _sql_table_order(sql)
+            order_groups.setdefault(order, []).append(index)
+
+    score_prefix = _size_only_prefix_scorer(
+        aliases,
+        table_size_estimates,
+    )
+
+    ranked_orders = sorted(
+        order_groups,
+        key=lambda order: (score_prefix(order), order),
+    )
+
+    # Visit the best-scoring order for each starting relation first. Then
+    # consider remaining orders in score order.
+    diverse_orders = []
+    seen_starts = set()
+
+    for order in ranked_orders:
+        if order[0] not in seen_starts:
+            diverse_orders.append(order)
+            seen_starts.add(order[0])
+
+    diverse_orders.extend(
+        order for order in ranked_orders if order not in set(diverse_orders)
+    )
+
+    def variant_priority(order: tuple[str, ...], index: int) -> int:
+        strategy = sql_variants[index][0]
+        base_label = "join_order_" + "_".join(order)
+
+        if strategy == f"{base_label}_broadcast":
+            return 0
+        if strategy == base_label:
+            return 1
+        if strategy == f"{base_label}_merge":
+            return 2
+        if strategy == f"{base_label}_shuffle_hash":
+            return 3
+        return 4
+
+    selected_indices = set(base_indices)
+    remaining = candidate_analysis_limit - len(base_indices)
+
+    # Pass 1: reserve one broadcast candidate per selected order.
+    for order in diverse_orders:
+        if remaining <= 0:
+            break
+
+        group = order_groups[order]
+        ranked_variants = sorted(
+            group,
+            key=lambda index: variant_priority(order, index),
+        )
+        chosen = ranked_variants[0]
+
+        selected_indices.add(chosen)
+        remaining -= 1
+
+    # Pass 2: spend remaining slots on alternative strategies for the
+    # selected/high-ranked orders, without exceeding the requested limit.
+    for order in diverse_orders:
+        group = sorted(
+            order_groups[order],
+            key=lambda index: variant_priority(order, index),
+        )
+        for index in group:
+            if remaining <= 0:
+                break
+            if index in selected_indices:
+                continue
+
+            selected_indices.add(index)
+            remaining -= 1
+
+        if remaining <= 0:
+            break
+
+    # Preserve original variant order for stable analysis and candidate IDs.
+    return [
+        variant
+        for index, variant in enumerate(sql_variants)
+        if index in selected_indices
+    ]
+
+
 def _generate_join_order_variants(
     query: QueryRequest,
     *,
@@ -632,6 +770,7 @@ def generate_join_candidates(
     beam_width: int = 20,
     join_search_statistics: JoinSearchStatistics | None = None,
     candidate_workers: int = 1,
+    candidate_analysis_limit: int | None = None,
 ) -> List[CandidatePlan]:
     """
     Generate alternative physical-plan candidates.
@@ -642,6 +781,10 @@ def generate_join_candidates(
     No candidate query is executed here. ``candidate_workers`` controls
     bounded concurrent physical-plan analysis; the default of 1 preserves
     sequential analysis. Deduplication and candidate IDs remain ordered.
+
+    ``candidate_analysis_limit`` optionally applies inexpensive table-size
+    pre-scoring in beam mode to limit SQL variants sent to Spark. The
+    default of None preserves existing behavior.
     """
 
     if search_mode not in {"exhaustive", "beam"}:
@@ -663,6 +806,20 @@ def generate_join_candidates(
     ):
         raise ValueError("candidate_workers must be a positive integer")
 
+    if candidate_analysis_limit is not None:
+        if (
+            not isinstance(candidate_analysis_limit, int)
+            or isinstance(candidate_analysis_limit, bool)
+            or candidate_analysis_limit < 4
+        ):
+            raise ValueError(
+                "candidate_analysis_limit must be an integer >= 4"
+            )
+        if search_mode != "beam":
+            raise ValueError(
+                "candidate_analysis_limit requires search_mode='beam'"
+            )
+
     table_size_estimates = (
         _estimate_table_size_bytes(query, spark)
         if search_mode == "beam"
@@ -676,6 +833,18 @@ def generate_join_candidates(
         table_size_estimates=table_size_estimates,
         join_search_statistics=join_search_statistics,
     )
+
+    if candidate_analysis_limit is not None:
+        aliases = tuple(
+            table.alias
+            for table in extract_query_structure(query.sql).tables
+        )
+        sql_variants = _pre_score_sql_variants(
+            sql_variants,
+            aliases=aliases,
+            table_size_estimates=table_size_estimates,
+            candidate_analysis_limit=candidate_analysis_limit,
+        )
 
     def analyze_variant(item):
         strategy, sql = item
