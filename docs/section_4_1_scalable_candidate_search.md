@@ -102,6 +102,39 @@ only. It does not establish a 3% execution-loss bound for Q03–Q10 or for the
 separate full-SF10-derived scalability dataset. The predictor's ability to
 select the best candidate is also not established by candidate retention alone.
 
+## Wider-Beam Quality Validation for Q06–Q10
+
+A follow-up execution-quality experiment evaluated the cap-48 candidate set
+against the uncapped beam-width-40 reference for Q06 through Q10. These
+experiments used the local representative parquet data for the core tables
+and the local E3 parquet data for additional relations.
+
+For each query, 123 reference physical plans and 46 cap-48 physical plans
+were generated. Each reference plan was screened once. The five fastest
+valid plans from the reference and the five fastest valid plans from the
+capped set were combined into a finalist set and repeatedly measured five
+times. Duplicate finalists were measured only once per repetition.
+
+| Query | Tables | Reference plans | Cap-48 plans | Screening-best retained | Repeated-finalist loss | Errors / mismatches |
+|---|---:|---:|---:|---|---:|---:|
+| Q06 | 6 | 123 | 46 | Yes | 0.00% | 0 / 0 |
+| Q07 | 7 | 123 | 46 | Yes | 0.00% | 0 / 0 |
+| Q08 | 8 | 123 | 46 | Yes | 0.00% | 0 / 0 |
+| Q09 | 9 | 123 | 46 | Yes | 0.00% | 0 / 0 |
+| Q10 | 10 | 123 | 46 | Yes | 0.00% | 0 / 0 |
+
+All screened candidates returned results equivalent to the original query
+results. No screening or finalist execution errors and no result mismatches
+were recorded.
+
+These findings are encouraging, but the reference is an uncapped beam-width-40
+candidate set, not true exhaustive search. In addition, screening measured
+each reference candidate only once, so timing noise can affect which plans
+enter the finalist set. The reported 0.00% loss is therefore a repeated-finalist
+comparison, not proof of a 3% bound against the true best plan across all
+reference candidates. Stronger validation requires repeated measurements of
+all candidates or a defensible exhaustive reference where feasible.
+
 ## Implementation and Cache Decision
 
 Pre-scoring is a lightweight heuristic to reduce the number of SQL variants
@@ -151,5 +184,17 @@ adopted.
   `results/e3/beam40_cap48/parallel_workers_all_summary.csv`
 - Parallel-analysis chart:
   `results/e3/beam40_cap48/parallel_worker_comparison.svg`
+- Wider-beam quality-validation runner:
+  `experiments/benchmark_e3_quality_validation.py`
+- Q06–Q10 quality summary generator:
+  `experiments/summarize_e3_quality_validation.py`
+- Q06–Q10 combined quality summary:
+  `results/e3/quality_validation/q06_q10_quality_summary.csv`
+- Per-query quality-validation runs and summaries:
+  `results/e3/quality_validation/q06_pilot_runs.csv`,
+  `results/e3/quality_validation/q07_validation_runs.csv`,
+  `results/e3/quality_validation/q08_validation_runs.csv`,
+  `results/e3/quality_validation/q09_validation_runs.csv`,
+  `results/e3/quality_validation/q10_validation_runs.csv`
 - Q05 cap-48 repeatability:
   `results/e3/exhaustive_prescoring_q05_cap48_repeat_runs.csv`
