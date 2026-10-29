@@ -58,6 +58,27 @@ measured runs.
 
 ![Median planning time comparison](../results/e3/beam40_cap48/planning_time_comparison.svg)
 
+## Parallel Physical-Plan Analysis
+
+A follow-up planning-only experiment held beam width 40 and the candidate-analysis cap at 48 while testing 1, 2, and 4 candidate-analysis workers. The Spark configuration remained `local[2]`, and each configuration used one warm-up followed by three measured repetitions. The queries themselves were not executed.
+
+| Query | Tables | 1 worker (s) | 2 workers (s) | 4 workers (s) | Time saved with 4 workers |
+|---|---:|---:|---:|---:|---:|
+| Q03 | 3 | 0.186 | 0.127 | 0.072 | 61.31% |
+| Q04 | 4 | 0.694 | 0.353 | 0.247 | 64.41% |
+| Q05 | 5 | 0.781 | 0.544 | 0.423 | 45.79% |
+| Q06 | 6 | 1.019 | 0.563 | 0.514 | 49.62% |
+| Q07 | 7 | 1.429 | 0.903 | 0.600 | 57.99% |
+| Q08 | 8 | 1.437 | 0.893 | 0.646 | 55.06% |
+| Q09 | 9 | 3.558 | 1.959 | 1.180 | 66.83% |
+| Q10 | 10 | 3.721 | 2.101 | 1.263 | 66.05% |
+
+The average of the per-query planning-time reductions with four workers was approximately 58.4%. All queries completed below three seconds with four workers, including Q09 and Q10, which exceeded that target in the earlier single-worker experiment.
+
+Plan counts were consistent: 12 for Q03, 36 for Q04, and 46 for Q05–Q10. No candidate-analysis errors occurred, and fingerprints were stable across the three repetitions within each worker configuration. This experiment validates planning latency; it does not establish the execution-quality target across all eight queries.
+
+![Parallel candidate-analysis planning-time comparison](../results/e3/beam40_cap48/parallel_worker_comparison.svg)
+
 ## Execution-Quality Check for Q05
 
 A separate execution-quality experiment used the five-table Q05 query against
@@ -96,8 +117,9 @@ adopted.
 
 - The three-repetition planning experiment reports medians, but broader
   repetition counts would strengthen the timing estimates.
-- The three-second planning target was not met by cap 48 for Q09 and Q10;
-  their measured medians were 3.190 and 3.212 seconds.
+- In the initial single-worker cap-48 experiment, Q09 and Q10 took 3.190
+  and 3.212 seconds. The subsequent parallel-analysis experiment brought
+  them below three seconds with four candidate-analysis workers.
 - The 3% execution-quality target has only been demonstrated for Q05 on the
   representative dataset. Other queries and larger-data execution quality
   remain unvalidated.
@@ -119,5 +141,15 @@ adopted.
   `results/e3/exhaustive_prescoring_q05_summary.csv`
 - Q05 cap sweep:
   `results/e3/exhaustive_prescoring_q05_cap_sweep.csv`
+- All-query parallel-analysis runner:
+  `experiments/benchmark_e3_parallel_workers_all.py`
+- Q09/Q10 parallel-analysis diagnostic:
+  `experiments/benchmark_e3_parallel_workers.py`
+- Parallel-analysis measurements:
+  `results/e3/beam40_cap48/parallel_workers_all_runs.csv`
+- Parallel-analysis summary:
+  `results/e3/beam40_cap48/parallel_workers_all_summary.csv`
+- Parallel-analysis chart:
+  `results/e3/beam40_cap48/parallel_worker_comparison.svg`
 - Q05 cap-48 repeatability:
   `results/e3/exhaustive_prescoring_q05_cap48_repeat_runs.csv`
