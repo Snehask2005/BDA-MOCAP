@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1150" height="610" viewBox="0 0 1150 610">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:Arial,sans-serif;fill:#243247}.grid{stroke:#dce2ea;stroke-width:1}.axis{stroke:#526174;stroke-width:1.2}</style>
+<text x="575.0" y="35" text-anchor="middle" font-size="23" font-weight="bold">Parallel Plan Analysis: E3 Queries</text>
+<line x1="90" y1="510.0" x2="1120" y2="510.0" class="grid"/>
+<text x="78" y="515.0" text-anchor="end" font-size="14">0</text>
+<line x1="90" y1="407.5" x2="1120" y2="407.5" class="grid"/>
+<text x="78" y="412.5" text-anchor="end" font-size="14">1</text>
+<line x1="90" y1="305.0" x2="1120" y2="305.0" class="grid"/>
+<text x="78" y="310.0" text-anchor="end" font-size="14">2</text>
+<line x1="90" y1="202.5" x2="1120" y2="202.5" class="grid"/>
+<text x="78" y="207.5" text-anchor="end" font-size="14">3</text>
+<line x1="90" y1="100.0" x2="1120" y2="100.0" class="grid"/>
+<text x="78" y="105.0" text-anchor="end" font-size="14">4</text>
+<line x1="90" y1="100" x2="90" y2="510" class="axis"/>
+<line x1="90" y1="510" x2="1120" y2="510" class="axis"/>
+<text transform="translate(25 305.0) rotate(-90)" text-anchor="middle" font-size="16">Median planning time (seconds)</text>
+<rect x="119.7" y="490.9" width="21" height="19.1" rx="2" fill="#687a90"/>
+<text x="130.2" y="484.9" text-anchor="middle" font-size="11">0.186</text>
+<rect x="143.9" y="497.0" width="21" height="13.0" rx="2" fill="#d49a35"/>
+<text x="154.4" y="491.0" text-anchor="middle" font-size="11">0.127</text>
+<rect x="168.0" y="502.6" width="21" height="7.4" rx="2" fill="#2b7bbb"/>
+<text x="178.5" y="496.6" text-anchor="middle" font-size="11">0.072</text>
+<text x="154.4" y="535" text-anchor="middle" font-size="13">Q03</text>
+<text x="154.4" y="553" text-anchor="middle" font-size="12">3 tables</text>
+<rect x="248.5" y="438.9" width="21" height="71.1" rx="2" fill="#687a90"/>
+<text x="259.0" y="432.9" text-anchor="middle" font-size="11">0.694</text>
+<rect x="272.6" y="473.9" width="21" height="36.1" rx="2" fill="#d49a35"/>
+<text x="283.1" y="467.9" text-anchor="middle" font-size="11">0.353</text>
+<rect x="296.8" y="484.7" width="21" height="25.3" rx="2" fill="#2b7bbb"/>
+<text x="307.3" y="478.7" text-anchor="middle" font-size="11">0.247</text>
+<text x="283.1" y="535" text-anchor="middle" font-size="13">Q04</text>
+<text x="283.1" y="553" text-anchor="middle" font-size="12">4 tables</text>
+<rect x="377.2" y="429.9" width="21" height="80.1" rx="2" fill="#687a90"/>
+<text x="387.7" y="423.9" text-anchor="middle" font-size="11">0.781</text>
+<rect x="401.4" y="454.3" width="21" height="55.7" rx="2" fill="#d49a35"/>
+<text x="411.9" y="448.3" text-anchor="middle" font-size="11">0.544</text>
+<rect x="425.5" y="466.6" width="21" height="43.4" rx="2" fill="#2b7bbb"/>
+<text x="436.0" y="460.6" text-anchor="middle" font-size="11">0.423</text>
+<text x="411.9" y="535" text-anchor="middle" font-size="13">Q05</text>
+<text x="411.9" y="553" text-anchor="middle" font-size="12">5 tables</text>
+<rect x="506.0" y="405.5" width="21" height="104.5" rx="2" fill="#687a90"/>
+<text x="516.5" y="399.5" text-anchor="middle" font-size="11">1.019</text>
+<rect x="530.1" y="452.3" width="21" height="57.7" rx="2" fill="#d49a35"/>
+<text x="540.6" y="446.3" text-anchor="middle" font-size="11">0.563</text>
+<rect x="554.3" y="457.4" width="21" height="52.6" rx="2" fill="#2b7bbb"/>
+<text x="564.8" y="451.4" text-anchor="middle" font-size="11">0.514</text>
+<text x="540.6" y="535" text-anchor="middle" font-size="13">Q06</text>
+<text x="540.6" y="553" text-anchor="middle" font-size="12">6 tables</text>
+<rect x="634.7" y="363.5" width="21" height="146.5" rx="2" fill="#687a90"/>
+<text x="645.2" y="357.5" text-anchor="middle" font-size="11">1.429</text>
+<rect x="658.9" y="417.5" width="21" height="92.5" rx="2" fill="#d49a35"/>
+<text x="669.4" y="411.5" text-anchor="middle" font-size="11">0.903</text>
+<rect x="683.0" y="448.5" width="21" height="61.5" rx="2" fill="#2b7bbb"/>
+<text x="693.5" y="442.5" text-anchor="middle" font-size="11">0.600</text>
+<text x="669.4" y="535" text-anchor="middle" font-size="13">Q07</text>
+<text x="669.4" y="553" text-anchor="middle" font-size="12">7 tables</text>
+<rect x="763.5" y="362.7" width="21" height="147.3" rx="2" fill="#687a90"/>
+<text x="774.0" y="356.7" text-anchor="middle" font-size="11">1.437</text>
+<rect x="787.6" y="418.5" width="21" height="91.5" rx="2" fill="#d49a35"/>
+<text x="798.1" y="412.5" text-anchor="middle" font-size="11">0.893</text>
+<rect x="811.8" y="443.8" width="21" height="66.2" rx="2" fill="#2b7bbb"/>
+<text x="822.3" y="437.8" text-anchor="middle" font-size="11">0.646</text>
+<text x="798.1" y="535" text-anchor="middle" font-size="13">Q08</text>
+<text x="798.1" y="553" text-anchor="middle" font-size="12">8 tables</text>
+<rect x="892.2" y="145.3" width="21" height="364.7" rx="2" fill="#687a90"/>
+<text x="902.7" y="139.3" text-anchor="middle" font-size="11">3.558</text>
+<rect x="916.4" y="309.2" width="21" height="200.8" rx="2" fill="#d49a35"/>
+<text x="926.9" y="303.2" text-anchor="middle" font-size="11">1.959</text>
+<rect x="940.5" y="389.0" width="21" height="121.0" rx="2" fill="#2b7bbb"/>
+<text x="951.0" y="383.0" text-anchor="middle" font-size="11">1.180</text>
+<text x="926.9" y="535" text-anchor="middle" font-size="13">Q09</text>
+<text x="926.9" y="553" text-anchor="middle" font-size="12">9 tables</text>
+<rect x="1021.0" y="128.6" width="21" height="381.4" rx="2" fill="#687a90"/>
+<text x="1031.5" y="122.6" text-anchor="middle" font-size="11">3.721</text>
+<rect x="1045.1" y="294.7" width="21" height="215.3" rx="2" fill="#d49a35"/>
+<text x="1055.6" y="288.7" text-anchor="middle" font-size="11">2.101</text>
+<rect x="1069.3" y="380.5" width="21" height="129.5" rx="2" fill="#2b7bbb"/>
+<text x="1079.8" y="374.5" text-anchor="middle" font-size="11">1.263</text>
+<text x="1055.6" y="535" text-anchor="middle" font-size="13">Q10</text>
+<text x="1055.6" y="553" text-anchor="middle" font-size="12">10 tables</text>
+<rect x="405.0" y="62" width="15" height="15" rx="2" fill="#687a90"/>
+<text x="427.0" y="75" font-size="14">1 worker</text>
+<rect x="565.0" y="62" width="15" height="15" rx="2" fill="#d49a35"/>
+<text x="587.0" y="75" font-size="14">2 workers</text>
+<rect x="725.0" y="62" width="15" height="15" rx="2" fill="#2b7bbb"/>
+<text x="747.0" y="75" font-size="14">4 workers</text>
+</svg>
