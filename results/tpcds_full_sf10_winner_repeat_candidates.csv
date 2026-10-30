@@ -1,0 +1,6 @@
+fingerprint,strategy,selected_for_modes,single_run_seconds,repeat_median_seconds,repeat_min_seconds,repeat_max_seconds,repeat_stdev_seconds,all_repeats_equivalent
+27b88ea52f4c9b01,join_order_cd_ss_s_d_i,beam_5,32.20681,41.246933,37.333574,43.541758,2.731482,True
+63ba548a3c1e8e96,join_order_d_ss_i_s_cd,beam_20,26.286833,35.214385,32.414386,36.958650,1.783522,True
+6df3f7a966dcfb66,join_order_d_ss_cd_s_i,beam_10,27.329558,32.520169,28.390527,34.665717,2.305900,True
+768bc938304bd152,join_order_ss_d_cd_i_s,exhaustive,24.521921,34.718652,32.265185,36.972330,2.259333,True
+c6ec8af12cc0af9d,join_order_s_ss_d_cd_i,beam_2,32.254248,40.597886,38.516054,46.346116,3.161510,True
