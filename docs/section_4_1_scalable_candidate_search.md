@@ -102,40 +102,42 @@ only. It does not establish a 3% execution-loss bound for Q03–Q10 or for the
 separate full-SF10-derived scalability dataset. The predictor's ability to
 select the best candidate is also not established by candidate retention alone.
 
-## Wider-Beam Quality Validation for Q06–Q10
+## Full Beam-Reference Quality Validation for Q06–Q10
 
-A follow-up execution-quality experiment evaluated the cap-48 candidate set
-against the uncapped beam-width-40 reference for Q06 through Q10. These
-experiments used the local representative parquet data for the core tables
-and the local E3 parquet data for additional relations.
+The earlier finalist-only comparisons were strengthened by measuring every
+unique physical plan in the uncapped beam-width-40 reference set for Q06
+through Q10.
 
-For each query, 123 reference physical plans and 46 cap-48 physical plans
-were generated. Each reference plan was screened once. The five fastest
-valid plans from the reference and the five fastest valid plans from the
-capped set were combined into a finalist set and repeatedly measured five
-times. Duplicate finalists were measured only once per repetition.
+For each query, the experiment generated 123 reference physical plans and
+46 cap-48 physical plans. The original screening measurements were reused
+as the first measurement for each reference plan. Two additional executions
+were performed for all 123 plans, giving three measurements per plan.
 
-| Query | Tables | Reference plans | Cap-48 plans | Screening-best retained | Repeated-finalist loss | Errors / mismatches |
-|---|---:|---:|---:|---|---:|---:|
-| Q06 | 6 | 123 | 46 | Yes | 0.00% | 0 / 0 |
-| Q07 | 7 | 123 | 46 | Yes | 0.00% | 0 / 0 |
-| Q08 | 8 | 123 | 46 | Yes | 0.00% | 0 / 0 |
-| Q09 | 9 | 123 | 46 | Yes | 0.00% | 0 / 0 |
-| Q10 | 10 | 123 | 46 | Yes | 0.00% | 0 / 0 |
+| Query | Tables | Reference plans | Cap-48 plans | Valid plans (3 measurements) | Reference-best median (s) | Cap-best median (s) | Observed loss |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Q06 | 6 | 123 | 46 | 123 | 0.168394 | 0.168394 | 0.00% |
+| Q07 | 7 | 123 | 46 | 123 | 0.217172 | 0.217172 | 0.00% |
+| Q08 | 8 | 123 | 46 | 123 | 0.337629 | 0.337629 | 0.00% |
+| Q09 | 9 | 123 | 46 | 123 | 0.376725 | 0.376725 | 0.00% |
+| Q10 | 10 | 123 | 46 | 123 | 0.429467 | 0.429467 | 0.00% |
 
-All screened candidates returned results equivalent to the original query
-results. No screening or finalist execution errors and no result mismatches
-were recorded.
+For all five queries, the best physical plan in the complete beam-40 reference
+set was retained by cap 48. All 123 reference plans per query had three valid
+measurements. No execution errors or result mismatches were recorded.
 
-These findings are encouraging, but the reference is an uncapped beam-width-40
-candidate set, not true exhaustive search. In addition, screening measured
-each reference candidate only once, so timing noise can affect which plans
-enter the finalist set. The reported 0.00% loss is therefore a repeated-finalist
-comparison, not proof of a 3% bound against the true best plan across all
-reference candidates. Stronger validation requires repeated measurements of
-all candidates or a defensible exhaustive reference where feasible.
+These results establish zero observed pruning loss relative to the complete
+uncapped beam-width-40 candidate sets on the tested representative datasets.
+They are stronger than finalist-only comparisons because every reference
+candidate was measured three times.
 
-## Implementation and Cache Decision
+However, uncapped beam-width-40 search is not exhaustive join-order
+enumeration. Beam search may already have discarded valid join orders before
+the reference candidate set is constructed. Therefore, these results do not
+prove a 3% loss bound against the true exhaustive-search optimum for Q06–Q10.
+The separate Q05 exhaustive-reference experiment provides the exhaustive
+comparison for that query only.
+
+## ## Implementation and Cache Decision
 
 Pre-scoring is a lightweight heuristic to reduce the number of SQL variants
 sent to Spark; it is not an execution-latency predictor.
@@ -196,5 +198,17 @@ adopted.
   `results/e3/quality_validation/q08_validation_runs.csv`,
   `results/e3/quality_validation/q09_validation_runs.csv`,
   `results/e3/quality_validation/q10_validation_runs.csv`
+- Full beam-reference quality benchmark:
+  `experiments/benchmark_e3_full_reference_quality.py`
+- Full-reference summary generator:
+  `experiments/summarize_e3_full_reference_quality.py`
+- Q06–Q10 combined full-reference summary:
+  `results/e3/quality_validation/q06_q10_full_reference_summary.csv`
+- Full-reference raw measurements:
+  `results/e3/quality_validation/q06_full_reference_runs.csv`,
+  `results/e3/quality_validation/q07_full_reference_runs.csv`,
+  `results/e3/quality_validation/q08_full_reference_runs.csv`,
+  `results/e3/quality_validation/q09_full_reference_runs.csv`,
+  `results/e3/quality_validation/q10_full_reference_runs.csv`
 - Q05 cap-48 repeatability:
   `results/e3/exhaustive_prescoring_q05_cap48_repeat_runs.csv`
