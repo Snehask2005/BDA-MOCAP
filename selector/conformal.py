@@ -257,3 +257,13 @@ class ConformalCalibrator:
             "min_margin": min(margins),
             "max_margin": max(margins),
         }
+
+
+# Compatibility exports for the predictor-level calibration engine.
+from predictor.conformal import (
+    ConformalCalibrationEngine,
+    ConformalMetrics,
+    compute_log_residuals,
+    compute_finite_sample_quantile,
+    compute_certified_upper_bound,
+)

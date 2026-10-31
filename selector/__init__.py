@@ -103,3 +103,33 @@ __all__ = [
     "RobustOptimizer",
     "RobustSelectionResult",
 ]
+
+
+# Backward compatibility exports for the original Phase 2 API.
+from selector.bounds import (
+    ConfidenceInterval,
+    EvaluatedPlan,
+    BoundFilterResult,
+    compute_plan_confidence_interval,
+    filter_chance_constrained_feasible,
+)
+from selector.conformal import (
+    ConformalCalibrationEngine,
+    ConformalMetrics,
+    compute_log_residuals,
+    compute_finite_sample_quantile,
+    compute_certified_upper_bound,
+)
+
+__all__.extend([
+    "ConfidenceInterval",
+    "EvaluatedPlan",
+    "BoundFilterResult",
+    "compute_plan_confidence_interval",
+    "filter_chance_constrained_feasible",
+    "ConformalCalibrationEngine",
+    "ConformalMetrics",
+    "compute_log_residuals",
+    "compute_finite_sample_quantile",
+    "compute_certified_upper_bound",
+])

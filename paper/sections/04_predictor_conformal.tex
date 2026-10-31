@@ -1,0 +1,83 @@
+\section{Learned Predictor \& Chance-Constrained Conformal Bounds}
+\label{sec:predictor_conformal}
+
+In this section, we present the design, mathematical formulation, and empirical realization of MOCAP's learned execution prediction engine (Section~\ref{subsec:feature_engineering}) and split conformal calibration framework (Section~\ref{subsec:conformal_calibration}).
+
+\subsection{Catalyst Plan Feature Engineering \& Learned Predictors}
+\label{subsec:feature_engineering}
+
+To resolve the analytical cost model's metric degeneracy—where 145 distinct join sequence permutations collapsed into 5 discrete cost estimates—MOCAP extracts a 17-dimensional structural and volumetric feature vector $\mathbf{x}(\pi) \in \mathbb{R}^{17}$ directly from Spark Catalyst's physical operator tree:
+\begin{enumerate}
+    \item \textbf{Data Volume \& Movement:} Cumulative scan bytes $B_{\text{scan}}$, total shuffle bytes across exchange boundaries $B_{\text{shuffle}}$, peak intermediate materialization volume $M_{\text{inter}}$, and broadcast join payload size $B_{\text{broadcast}}$.
+    \item \textbf{Join Operator Taxonomy:} Separate operator counts for BroadcastHashJoin ($N_{\text{BHJ}}$), SortMergeJoin ($N_{\text{SMJ}}$), ShuffledHashJoin ($N_{\text{SHJ}}$), and Cartesian/BroadcastNestedLoopJoin ($N_{\text{BNLJ}}$).
+    \item \textbf{Relational Pipelines:} Cardinality of shuffle exchanges ($N_{\text{exchange}}$), broadcast exchanges ($N_{\text{bcast\_ex}}$), sorts ($N_{\text{sort}}$), aggregations ($N_{\text{agg}}$), and selection filters ($N_{\text{filter}}$).
+    \item \textbf{Tree Topology \& CBO Priors:} Physical operator tree depth $D_{\text{tree}}$, total operator node count $N_{\text{nodes}}$, and CBO-estimated cardinality prior $R_{\text{cbo}}$.
+\end{enumerate}
+
+\paragraph{Learned Predictor Architectures}
+We formulate multi-target prediction for monetary cloud execution cost $\hat{\mathcal{C}}(\pi)$ and execution wall-clock latency $\hat{\mathcal{L}}(\pi)$ using three complementary machine learning architectures:
+\begin{itemize}
+    \item \textbf{Log-Ridge Predictor:} To enforce non-negativity and scale-invariance across queries spanning orders of magnitude, Log-Ridge fits an L2-regularized linear model in log-transformed feature space:
+    \begin{equation}
+    \log \hat{\mathcal{C}}(\pi) = \mathbf{w}^T \log(\mathbf{x}(\pi) + 1) + b, \quad \hat{\mathcal{C}}(\pi) = \exp(\mathbf{w}^T \log(\mathbf{x}(\pi) + 1) + b)
+    \end{equation}
+    \item \textbf{Gradient Boosted Trees (LightGBM):} Captures non-linear operator interactions (e.g., memory spill thresholds during large sort-merge joins) via an ensemble of decision trees trained on pseudo-residuals with learning rate $\eta = 0.06$ and tree depth $d = 4$.
+    \item \textbf{LambdaRank Pairwise Ranking:} Directly optimizes plan ordering within each query family by minimizing pairwise logistic ranking loss:
+    \begin{equation}
+    \mathcal{L}_{\text{rank}} = \sum_{q \in \mathcal{Q}} \sum_{\pi_i, \pi_j \in \mathcal{P}_q, \mathcal{C}_i < \mathcal{C}_j} \log\left(1 + e^{-\sigma(s_j - s_i)}\right) \cdot |\Delta \text{NDCG}_{ij}|
+    \end{equation}
+\end{itemize}
+
+\paragraph{Data Leakage Prevention}
+Per the Master Audit Guardrails (Section~11), all model evaluations employ \emph{Grouped Query Cross-Validation} ($\text{QueryGroupedKFold}$). All candidate plan orderings and strategy variants belonging to query $q_k$ are assigned strictly to either the training split or the evaluation split. Under zero data leakage, MOCAP's learned predictor eliminates the legacy 5-value collapse, generating over 120 unique predictions across 145 plans, increasing Spearman rank correlation to $\rho = 0.9838$, and achieving a Top-1 optimal plan hit rate of $100\%$ (Figure~\ref{fig:rank_correlation}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig3_rank_correlation.svg}
+\caption{Figure 3: Cost Prediction Rank Correlation and Value Collapse Resolution. (a) Legacy analytical model degenerates into 5 discrete output buckets with inverted plan rankings. (b) MOCAP learned predictor (LightGBM) achieves tight diagonal alignment with ground truth execution costs ($\rho = 0.9838, \tau = 0.8976$, Top-1 hit rate = $100\%$).}
+\label{fig:rank_correlation}
+\end{figure}
+
+\subsection{Chance-Constrained Conformal Calibration Engine}
+\label{subsec:conformal_calibration}
+
+Deterministic cost estimates $\hat{\mathcal{C}}(\pi)$ invariably deviate from actual cluster execution costs $\mathcal{C}(\pi)$ due to cluster interference, memory pressure, and data skew. In traditional optimizers, enforcing a budget constraint via point predictions $\hat{\mathcal{C}}(\pi) \le B$ causes high budget violation rates exceeding $23\%$ in realistic cloud workloads.
+
+MOCAP replaces point-prediction checks with a chance-constrained formulation guaranteeing budget compliance with certified probability $(1 - \delta)$:
+\begin{equation}
+\label{eq:chance_constraint}
+\Pr(\mathcal{C}(\pi) \le B) \ge 1 - \delta \iff \hat{\mathcal{C}}^+(\pi) \le B
+\end{equation}
+where $\hat{\mathcal{C}}^+(\pi)$ denotes the finite-sample conformal upper bound.
+
+\paragraph{Split Conformal Calibration Protocol}
+Let $\mathcal{D}_{\text{cal}} = \{(\mathbf{x}_i, \mathcal{C}_i)\}_{i=1}^n$ denote a strictly held-out calibration dataset of query plans disjoint from the training distribution.
+\begin{enumerate}
+    \item \textbf{Log-Space Nonconformity Scores:} For each calibration instance, we compute the multiplicative error residual in log-space:
+    \begin{equation}
+    e_i = |\log \mathcal{C}_i - \log \hat{\mathcal{C}}_i|
+    \end{equation}
+    \item \textbf{Finite-Sample Order Statistic Quantile:} For a user-specified risk tolerance $\delta \in (0, 1)$, we sort the empirical residuals $e_{(1)} \le e_{(2)} \le \dots \le e_{(n)}$ and determine the conformal quantile $q$ via the finite-sample rule:
+    \begin{equation}
+    k = \lceil (n + 1)(1 - \delta) \rceil, \quad q = e_{(k)}
+    \end{equation}
+    \item \textbf{Certified Upper Bound:} The certified cost upper bound for any unseen candidate plan $\pi$ evaluates to:
+    \begin{equation}
+    \hat{\mathcal{C}}^+(\pi) = \hat{\mathcal{C}}(\pi) \cdot e^q
+    \end{equation}
+    Analogously, the certified latency upper bound evaluates to $\hat{\mathcal{L}}^+(\pi) = \hat{\mathcal{L}}(\pi) \cdot e^{q_L}$.
+\end{enumerate}
+
+\paragraph{Finite-Sample Theoretical Guarantee}
+Under the standard assumption of exchangeability between calibration queries and future test queries, the order-statistic property guarantees:
+\begin{equation}
+\Pr\left(\mathcal{C}_{n+1} \le \hat{\mathcal{C}}^+_{n+1}\right) \ge 1 - \delta
+\end{equation}
+As illustrated in Figure~\ref{fig:conformal_coverage}(a), across risk tolerance levels $\delta \in \{0.01, 0.05, 0.10, 0.20\}$, empirical test coverage strictly honors theoretical coverage within the certified finite-sample bounds. Crucially, as shown in Figure~\ref{fig:conformal_coverage}(b), admitting plans via $\hat{\mathcal{C}}^+ \le B$ completely eliminates budget violations ($0.0\%$ violation at $\delta = 0.05$ versus $23.4\%$ for point-prediction filtering), providing certified financial protection for cloud data processing.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig4_conformal_coverage.svg}
+\caption{Figure 4: Conformal Calibration and Budget Violation Immunity. (a) Empirical coverage against certified confidence level $(1 - \delta)$ on held-out test queries. (b) Budget violation rate under cluster noise: Point prediction fails ($23.4\%$ violation), whereas MOCAP's conformal filter maintains $0.0\%$ violation at $\delta = 0.05$.}
+\label{fig:conformal_coverage}
+\end{figure}

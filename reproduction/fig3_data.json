@@ -1,0 +1,13 @@
+{
+  "legacy_baseline": {
+    "distinct": 35,
+    "rho": 0.8956599148235678,
+    "top1": 0.0
+  },
+  "learned_predictor": {
+    "distinct": 111,
+    "rho": 0.9870037779990626,
+    "top1": 100.0
+  },
+  "num_candidate_plans": 165
+}

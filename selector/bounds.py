@@ -257,3 +257,134 @@ class IntervalFilter:
             admitted_plans=admitted,
             rejection_records=rejections,
         )
+
+
+# ---------------------------------------------------------------------------
+# Backward compatibility for the original Phase 2 bounds API (Hridhika).
+# The newer robust optimizer uses PlanBounds and IntervalFilter above.
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ConfidenceInterval:
+    """Legacy certified interval [lower, upper]."""
+    point_estimate: float
+    upper_bound: float
+    lower_bound: float
+    delta: float
+    quantile_q: float
+
+
+@dataclass
+class EvaluatedPlan:
+    """Legacy candidate plan with its estimated and certified metrics."""
+    plan_id: str
+    query_id: str
+    strategy: str
+    estimated_cost: float
+    certified_cost_bound: float
+    estimated_latency: float
+    certified_latency_bound: float
+    is_cost_feasible: bool = True
+    is_latency_feasible: bool = True
+    cost_headroom: float = 0.0
+    latency_headroom: float = 0.0
+    raw_plan: Any = None
+
+
+@dataclass
+class BoundFilterResult:
+    """Legacy result of chance-constrained candidate filtering."""
+    feasible_plans: List[EvaluatedPlan]
+    infeasible_plans: List[EvaluatedPlan]
+    cost_budget: float
+    latency_deadline: Optional[float]
+    delta: float
+    all_evaluated: List[EvaluatedPlan] = field(default_factory=list)
+
+    @property
+    def has_feasible_plan(self) -> bool:
+        return len(self.feasible_plans) > 0
+
+
+def compute_plan_confidence_interval(
+    point_estimate: float,
+    quantile_q: float,
+    delta: float = 0.05,
+) -> ConfidenceInterval:
+    """Legacy symmetric interval using a log-residual quantile."""
+    factor = math.exp(float(quantile_q))
+    return ConfidenceInterval(
+        point_estimate=float(point_estimate),
+        upper_bound=float(point_estimate) * factor,
+        lower_bound=float(point_estimate) / factor,
+        delta=float(delta),
+        quantile_q=float(quantile_q),
+    )
+
+
+def filter_chance_constrained_feasible(
+    candidates: Sequence[Any],
+    cost_estimates: Sequence[float],
+    cost_upper_bounds: Sequence[float],
+    latency_estimates: Sequence[float],
+    latency_upper_bounds: Sequence[float],
+    budget: float,
+    deadline: Optional[float] = None,
+    delta: float = 0.05,
+) -> BoundFilterResult:
+    """Legacy chance-constrained feasibility filter."""
+    n = len(candidates)
+    arrays = (
+        cost_estimates,
+        cost_upper_bounds,
+        latency_estimates,
+        latency_upper_bounds,
+    )
+    if any(len(values) != n for values in arrays):
+        raise ValueError("Candidate and metric arrays must have equal lengths")
+
+    feasible: List[EvaluatedPlan] = []
+    infeasible: List[EvaluatedPlan] = []
+    all_evaluated: List[EvaluatedPlan] = []
+
+    for i, candidate in enumerate(candidates):
+        cost_est = float(cost_estimates[i])
+        cost_bound = float(cost_upper_bounds[i])
+        latency_est = float(latency_estimates[i])
+        latency_bound = float(latency_upper_bounds[i])
+
+        cost_ok = cost_bound <= budget
+        latency_ok = deadline is None or latency_bound <= deadline
+
+        evaluated = EvaluatedPlan(
+            plan_id=getattr(candidate, "plan_id", f"P{i + 1:02d}"),
+            query_id=getattr(candidate, "query_id", "Q01"),
+            strategy=getattr(candidate, "strategy", "default"),
+            estimated_cost=cost_est,
+            certified_cost_bound=cost_bound,
+            estimated_latency=latency_est,
+            certified_latency_bound=latency_bound,
+            is_cost_feasible=cost_ok,
+            is_latency_feasible=latency_ok,
+            cost_headroom=budget - cost_bound,
+            latency_headroom=(
+                deadline - latency_bound
+                if deadline is not None else float("inf")
+            ),
+            raw_plan=candidate,
+        )
+
+        all_evaluated.append(evaluated)
+        if cost_ok and latency_ok:
+            feasible.append(evaluated)
+        else:
+            infeasible.append(evaluated)
+
+    return BoundFilterResult(
+        feasible_plans=feasible,
+        infeasible_plans=infeasible,
+        cost_budget=budget,
+        latency_deadline=deadline,
+        delta=delta,
+        all_evaluated=all_evaluated,
+    )

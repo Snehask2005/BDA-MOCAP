@@ -86,7 +86,7 @@ class CalibrationService:
         self._samples.append(sample)
 
         return sample
-    
+
     def record_to_dataset(
         self,
         prediction: PlanMetrics,

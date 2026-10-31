@@ -149,7 +149,7 @@ Furthermore, since $\lceil x \rceil < x + 1$:
 \end{equation}
 Next, observe that:
 \begin{align*}
-    E_{n+1} \le q(\delta) 
+    E_{n+1} \le q(\delta)
     &\iff |\ln C_{n+1} - \ln \hat{C}_{n+1}| \le q(\delta) \\
     &\implies \ln C_{n+1} - \ln \hat{C}_{n+1} \le q(\delta) \\
     &\iff \ln C_{n+1} \le \ln \hat{C}_{n+1} + q(\delta) \\
@@ -196,7 +196,7 @@ Let $\mathcal{F} = \{p_i \in \mathcal{P}(q) : \hat{C}(p_i) \le B\}$ be the set o
 By definition of $\mathcal{F}$, every admitted candidate satisfies $\hat{C}(p) \le B \implies \hat{C}(p) - B \le 0$. Thus $\max(0, \hat{C}(p) - B) = 0$. Multiplying by any $\lambda \ge 0$ yields 0.
 \end{proof}
 
-\textbf{Implication:} The Lagrangian parameter $\lambda$ performed zero work during ranking. Ablation experiments comparing ``$\lambda = 0$'' vs. ``$\lambda = 10$'' produced strictly identical ranking orders across all 145 plans. 
+\textbf{Implication:} The Lagrangian parameter $\lambda$ performed zero work during ranking. Ablation experiments comparing ``$\lambda = 0$'' vs. ``$\lambda = 10$'' produced strictly identical ranking orders across all 145 plans.
 
 In MOCAP's modernized selector, we deprecate Eq.~\eqref{eq:inert_lagrangian} and introduce:
 \begin{enumerate}
