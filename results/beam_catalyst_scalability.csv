@@ -1,0 +1,10 @@
+query_id,table_count,search_mode,beam_width,rows_per_table,physical_candidates_after_dedup,generation_catalyst_median_seconds,generation_catalyst_mean_seconds,generation_catalyst_p95_seconds,warmups,measured_repetitions,spark_master,aqe_enabled,cbo_enabled,auto_broadcast_join_threshold,executed_query
+BEAM_CATALYST_3,3,exhaustive,,100,12,0.230859,0.227494,0.284569,2,7,local[2],False,False,-1,False
+BEAM_CATALYST_3,3,beam,10,100,12,0.179939,0.177809,0.193081,2,7,local[2],False,False,-1,False
+BEAM_CATALYST_4,4,exhaustive,,100,24,0.299239,0.305201,0.37732,2,7,local[2],False,False,-1,False
+BEAM_CATALYST_4,4,beam,10,100,24,0.26516,0.26752,0.286294,2,7,local[2],False,False,-1,False
+BEAM_CATALYST_5,5,exhaustive,,100,48,0.586606,0.593917,0.619809,2,7,local[2],False,False,-1,False
+BEAM_CATALYST_5,5,beam,10,100,30,0.35317,0.35403,0.381346,2,7,local[2],False,False,-1,False
+BEAM_CATALYST_6,6,beam,10,100,30,0.396553,0.397538,0.440708,2,7,local[2],False,False,-1,False
+BEAM_CATALYST_8,8,beam,10,100,30,0.444166,0.44072,0.460508,2,7,local[2],False,False,-1,False
+BEAM_CATALYST_10,10,beam,10,100,30,0.487241,0.504742,0.546304,2,7,local[2],False,False,-1,False

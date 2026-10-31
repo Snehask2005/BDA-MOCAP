@@ -1,0 +1,16 @@
+timestamp_utc,phase,mode,repetition,fingerprint,strategy,execution_seconds,row_count,total_sales,result_equivalent,error
+2026-10-27T17:16:54.537594+00:00,screen,baseline_all_plans,0,ed6a691c39432a45,join_order_i_ss_p_s_hd_t_d_c_ca_cd_shuffle_hash,70.273910,15729782,30078072173.98999,True,
+2026-10-27T17:19:07.376122+00:00,screen,baseline_all_plans,0,bd84f66149c92fb5,join_order_ca_c_ss_p_hd_s_t_d_cd_i_shuffle_hash,132.828535,15729782,30078072173.99001,True,
+2026-10-27T17:20:12.572382+00:00,screen,baseline_all_plans,0,d06114cab1dcd892,join_order_t_ss_p_s_hd_d_c_ca_cd_i,65.194244,15729782,30078072173.990032,True,
+2026-10-27T17:21:09.858478+00:00,screen,baseline_all_plans,0,24c3b2a4b98db1c6,join_order_ca_c_ss_p_s_hd_t_d_cd_i_shuffle_hash,57.281852,15729782,30078072173.99001,True,
+2026-10-27T17:22:07.069005+00:00,screen,baseline_all_plans,0,345e26c3a21fbfb1,join_order_p_ss_s_hd_t_d_c_ca_cd_i_shuffle_hash,57.208973,15729782,30078072173.990005,True,
+2026-10-27T17:22:11.818211+00:00,screen,baseline_all_plans,0,4793c9470c1f5ccb,join_order_c_ca_ss_p_s_hd_t_d_cd_i_broadcast,4.743131,,,False,"Py4JJavaError('An error occurred while calling o601.collectToPython.\n', JavaObject id=o602)"
+2026-10-27T17:22:14.689161+00:00,screen,baseline_all_plans,0,9ab66d7226033a56,join_order_s_ss_p_hd_t_d_c_ca_cd_i_broadcast,2.869578,,,False,"Py4JJavaError('An error occurred while calling o608.collectToPython.\n', JavaObject id=o609)"
+2026-10-27T17:23:15.997842+00:00,screen,baseline_all_plans,0,65addfd4e4d630bd,join_order_hd_ss_p_s_t_d_c_ca_cd_i_shuffle_hash,61.307467,15729782,30078072173.990005,True,
+2026-10-27T17:24:35.534837+00:00,screen,baseline_all_plans,0,a149db891b801638,join_order_hd_ss_p_s_t_d_c_ca_cd_i,79.535481,15729782,30078072173.990032,True,
+2026-10-27T17:26:02.335218+00:00,screen,baseline_all_plans,0,d235e1ae4811b1b8,join_order_cd_ss_p_s_hd_t_d_c_ca_i_shuffle_hash,86.787288,15729782,30078072173.989986,True,
+2026-10-27T17:27:39.601268+00:00,screen,baseline_all_plans,0,52f5fcfa78d51b70,join_order_p_ss_s_hd_t_d_c_ca_cd_i,97.263665,15729782,30078072173.990032,True,
+2026-10-27T17:29:01.971241+00:00,screen,baseline_all_plans,0,031bf9b74925592b,join_order_t_ss_p_s_hd_d_c_ca_cd_i_shuffle_hash,82.350671,15729782,30078072173.990005,True,
+2026-10-27T17:30:14.298108+00:00,screen,baseline_all_plans,0,3436aaa4ad0eef59,join_order_d_ss_p_s_hd_t_c_ca_cd_i,72.325227,15729782,30078072173.990032,True,
+2026-10-27T17:31:33.120362+00:00,screen,baseline_all_plans,0,6300de62e15be80d,join_order_d_ss_p_s_hd_t_c_ca_cd_i_shuffle_hash,78.815324,15729782,30078072173.990005,True,
+2026-10-27T17:33:11.229260+00:00,screen,baseline_all_plans,0,252bbe62f1504c99,join_order_c_ca_ss_p_s_hd_t_d_cd_i_shuffle_hash,98.106427,15729782,30078072173.99001,True,

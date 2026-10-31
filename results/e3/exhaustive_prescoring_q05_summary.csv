@@ -1,0 +1,4 @@
+mode,candidate_analysis_limit,planning_repetitions,median_planning_seconds,generated_sql_variants,analyzed_sql_variants,unique_physical_plans,valid_measured_plans,best_strategy,best_fingerprint,best_median_execution_seconds,exhaustive_best_retained,pruning_loss_percent,all_candidate_results_equivalent,execution_errors,execution_repetitions
+exhaustive,,3,3.923425,192,192,144,144,join_order_ss_i_cd_s_d_broadcast,7b045df9307ed645,0.114826,True,0.0000,True,0,5
+prescore_12,12,3,0.266710,44,12,11,11,join_order_s_ss_d_cd_i_broadcast,76c670b60cf01177,0.147053,False,28.0659,True,0,5
+prescore_20,20,3,0.399417,44,20,17,17,join_order_cd_ss_d_i_s_broadcast,9d8c19c848a3414a,0.137664,False,19.8892,True,0,5

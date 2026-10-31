@@ -1,0 +1,4 @@
+query_file,table_count,join_count,mode,candidate_analysis_limit,generated_sql_variant_count,analyzed_sql_variant_count,unique_physical_plan_count,measured_repetitions,median_table_statistics_seconds,median_sql_variant_generation_seconds,median_prescoring_seconds,median_spark_analysis_seconds,median_total_planning_seconds,planning_time_saved_percent_vs_baseline,runs_with_analysis_errors,query_execution_performed
+q10_10_tables.sql,10,9,baseline,,44,44,33,10,0.042656,0.037408,0.000000,3.217242,3.302787,0.00,0,False
+q10_10_tables.sql,10,9,prescore_12,12,44,12,11,10,0.042887,0.037711,0.051503,0.879600,1.020586,69.10,0,False
+q10_10_tables.sql,10,9,prescore_20,20,44,20,17,10,0.041063,0.038193,0.047760,1.462113,1.592532,51.78,0,False

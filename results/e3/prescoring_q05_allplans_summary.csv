@@ -1,0 +1,4 @@
+mode,candidate_analysis_limit,candidate_plan_count,valid_measured_plan_count,best_strategy,best_fingerprint,best_median_seconds,baseline_best_fingerprint_retained,latency_change_percent_vs_baseline,all_candidate_results_equivalent,execution_errors,repetitions_per_plan
+baseline,,33,33,join_order_cd_ss_d_i_s_broadcast,9d8c19c848a3414a,0.157696,True,0.00,True,0,5
+prescore_12,12,9,9,join_order_s_ss_cd_d_i_broadcast,4e62f1679114d411,0.208039,False,31.92,True,0,5
+prescore_20,20,15,15,join_order_s_ss_d_cd_i_broadcast,76c670b60cf01177,0.171408,False,8.70,True,0,5

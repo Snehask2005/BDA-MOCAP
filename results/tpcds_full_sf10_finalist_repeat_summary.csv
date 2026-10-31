@@ -1,0 +1,6 @@
+mode,shortlisted_candidates,repetitions_per_candidate,best_repeated_median_seconds,best_strategy,best_fingerprint,first_run_exhaustive_winner_retained,loss_vs_repeated_exhaustive_winner_percent,timing_scope
+exhaustive,2,3,32.969373,join_order_ss_d_cd_i_s,768bc938304bd152,True,0.0000,"shortlisted finalists, local full-data sample"
+beam_2,2,3,36.866613,default,7e1e20dfea1593c2,False,11.8208,"shortlisted finalists, local full-data sample"
+beam_5,2,3,39.431861,join_order_cd_ss_s_d_i,27b88ea52f4c9b01,False,19.6015,"shortlisted finalists, local full-data sample"
+beam_10,2,3,33.725908,join_order_d_ss_cd_s_i,6df3f7a966dcfb66,False,2.2947,"shortlisted finalists, local full-data sample"
+beam_20,2,3,31.441856,join_order_d_ss_i_s_cd,63ba548a3c1e8e96,False,-4.6331,"shortlisted finalists, local full-data sample"

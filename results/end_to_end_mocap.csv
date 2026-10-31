@@ -1,0 +1,2 @@
+query_id,candidate_count,feasible_count,pareto_count,selected_plan,predicted_cost,actual_cost,predicted_latency,actual_latency,budget,deadline,execution_mode
+E2E_MOCAP_Q1,12,12,2,E2E_MOCAP_Q1_P05,3.933986007862292e-05,1.372272809346517e-05,0.75101806640625,1.0292046070098877,100.0,100.0,strict

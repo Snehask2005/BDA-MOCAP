@@ -1,0 +1,2 @@
+query,strategy_scope,beam_width,exhaustive_candidate_count,beam_candidate_count,repetitions_per_candidate,exhaustive_best_strategy,exhaustive_best_fingerprint,exhaustive_best_median_seconds,beam_best_strategy,beam_best_fingerprint,beam_best_median_seconds,exhaustive_best_retained,pruning_loss_percent,all_results_equivalent
+TPC-DS-derived five-table query,default and unhinted join-order plans,10,48,11,5,join_order_cd_ss_d_s_i,732edb6fc35e27a1,4.091690,join_order_cd_ss_d_s_i,732edb6fc35e27a1,4.091690,True,0.0000,True

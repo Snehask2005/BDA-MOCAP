@@ -1,0 +1,6 @@
+mode,beam_width,candidate_count,unique_fingerprints,join_order_variants,measured_repetitions,median_planning_seconds,min_planning_seconds,max_planning_seconds,planning_only,query_execution_performed
+exhaustive,,144,144,141,3,2.700660,2.656083,3.105446,True,False
+beam_2,2,9,9,6,3,0.183155,0.165262,0.238049,True,False
+beam_5,5,18,18,15,3,0.339601,0.323477,0.408886,True,False
+beam_10,10,33,33,30,3,0.609302,0.596432,0.616341,True,False
+beam_20,20,63,63,60,3,1.188403,1.089023,1.272890,True,False

@@ -1,0 +1,2 @@
+plan_id,query_id,cpu_component,io_component,shuffle_component,estimated_cost,actual_cost,estimated_latency,actual_latency
+CALIBRATION_DEMO_P02,CALIBRATION_DEMO,1.4400000000000001e-05,0.000625,0.00078125,0.00142065,5.7666158676147464e-05,1.3800000000000001,4.32496190071106
