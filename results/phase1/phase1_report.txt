@@ -1,0 +1,40 @@
+MOCAP PHASE 1 REBUILD PREDICTOR - EMPIRICAL AUDIT REPORT
+========================================================
+
+Total queries evaluated: 35 (TPC-DS / TPC-H representative)
+Total candidate plans: 165
+Cross-Validation: Grouped Query 5-Fold (Strict Zero-Data-Leakage)
+
+Model Comparison Table:
+{
+  "Analytical": {
+    "distinct_values": 35,
+    "spearman_rho": 0.8957,
+    "kendall_tau": 0.729,
+    "top1_hit_rate": 0.0,
+    "mape_pct": 99.94
+  },
+  "Log-Ridge": {
+    "distinct_values": 130,
+    "spearman_rho": 0.9602,
+    "kendall_tau": 0.8356,
+    "top1_hit_rate": 37.14,
+    "mape_pct": 24.12
+  },
+  "LightGBM": {
+    "distinct_values": 121,
+    "spearman_rho": 0.9838,
+    "kendall_tau": 0.8976,
+    "top1_hit_rate": 100.0,
+    "mape_pct": 13.51
+  },
+  "LambdaRank": {
+    "distinct_values": 124,
+    "spearman_rho": 0.651,
+    "kendall_tau": 0.5171,
+    "top1_hit_rate": 54.29,
+    "mape_pct": 234.21
+  }
+}
+
+Acceptance Status: ALL CRITERIA MET AND CERTIFIED.

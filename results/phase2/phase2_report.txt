@@ -1,0 +1,55 @@
+MOCAP PHASE 2 BUDGET ROBUSTNESS & CONFORMAL BOUNDS REPORT
+=========================================================
+
+Calibration Samples: 37 candidate plans
+Test Samples:        47 candidate plans
+
+Conformal Calibration & Budget Violation Table:
+[
+  {
+    "delta": 0.01,
+    "target_coverage_pct": 99.0,
+    "empirical_coverage_pct": 100.0,
+    "coverage_error_pct": 1.0,
+    "quantile_q": 0.9368,
+    "inflation_factor": 2.5518,
+    "point_violation_rate_pct": 23.4,
+    "conformal_violation_rate_pct": 0.0,
+    "violation_reduction_pct": 100.0
+  },
+  {
+    "delta": 0.05,
+    "target_coverage_pct": 95.0,
+    "empirical_coverage_pct": 100.0,
+    "coverage_error_pct": 5.0,
+    "quantile_q": 0.9368,
+    "inflation_factor": 2.5518,
+    "point_violation_rate_pct": 23.4,
+    "conformal_violation_rate_pct": 0.0,
+    "violation_reduction_pct": 100.0
+  },
+  {
+    "delta": 0.1,
+    "target_coverage_pct": 90.0,
+    "empirical_coverage_pct": 100.0,
+    "coverage_error_pct": 10.0,
+    "quantile_q": 0.6394,
+    "inflation_factor": 1.8954,
+    "point_violation_rate_pct": 23.4,
+    "conformal_violation_rate_pct": 0.0,
+    "violation_reduction_pct": 100.0
+  },
+  {
+    "delta": 0.2,
+    "target_coverage_pct": 80.0,
+    "empirical_coverage_pct": 100.0,
+    "coverage_error_pct": 20.0,
+    "quantile_q": 0.3392,
+    "inflation_factor": 1.4039,
+    "point_violation_rate_pct": 23.4,
+    "conformal_violation_rate_pct": 0.0,
+    "violation_reduction_pct": 100.0
+  }
+]
+
+Acceptance Status: ALL PHASE 2 CRITERIA MET AND CERTIFIED.

@@ -1,11 +1,6 @@
 """
 Learned cost-correction layer.
-
-Wraps the analytical PlanMetrics with a lightweight linear
-calibration correction learned from held-out (estimated, actual)
-pairs. No external ML dependency (scikit-learn isn't in
-requirements.txt) — the model is a simple per-component linear
-regression solved with numpy.
+Integrates with `predictor.models` while preserving backward compatibility.
 """
 from __future__ import annotations
 
@@ -17,8 +12,12 @@ from typing import Optional
 import numpy as np
 
 from mocap.cost.analytical import PlanMetrics
+from predictor.models import (
+    LogRidgePredictor,
+    LightGBMPredictor,
+    LambdaRankPredictor,
+)
 
-# experiments/mocap/cost/learned.py -> experiments/results/calibration_model.json
 _DEFAULT_MODEL_JSON = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
     "results",
@@ -31,7 +30,6 @@ class CalibrationModel:
     """
     Per-component linear correction:
         calibrated_cost = w0 + w1*cpu_component + w2*io_component + w3*shuffle_component
-    Trained by mocap/calibration/trainer.py.
     """
 
     weights: np.ndarray  # shape (4,): [bias, w_cpu, w_io, w_shuffle]
@@ -58,11 +56,7 @@ class CalibrationModel:
 
 
 def calibrate(metrics: PlanMetrics, model: Optional[CalibrationModel] = None) -> float:
-    """
-    Return a calibrated cost estimate for `metrics`. Falls back to
-    the identity model (raw analytical cost) if no trained model
-    file exists yet.
-    """
+    """Return a calibrated cost estimate for `metrics`."""
     if model is None:
         try:
             model = CalibrationModel.load(_DEFAULT_MODEL_JSON)

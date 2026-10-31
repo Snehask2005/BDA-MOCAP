@@ -1,0 +1,51 @@
+\section{Related Work}
+\label{sec:related_work}
+
+Modern database systems and distributed analytics engines increasingly encounter dynamic, multi-tenant cloud environments where queries must execute under strict financial budgets and latency service-level objectives (SLOs). In this section, we categorize prior research across four foundational pillars: Cost-Based Optimizers (CBO), Learned Query Optimizers, Robust and Parametric Optimization, and Conformal Uncertainty Quantification. We summarize the positioning of our approach against state-of-the-art architectures in Table~\ref{tab:taxonomy_summary}.
+
+\subsection{Cost-Based Optimizers and System Metric Degeneracy}
+Traditional relational query engines—including System R~\cite{selinger1979access}, PostgreSQL, and Apache Spark's Catalyst engine~\cite{armbrust2015spark}—rely on analytical cost models parameterized by static statistics. In distributed engines such as Spark SQL, the CBO calculates physical plan execution cost as an additive linear combination of projected CPU work, I/O scan volumes, and network shuffle bytes:
+\begin{equation}
+\mathcal{C}_{\text{analytical}}(\pi) = \alpha_{\text{cpu}} \cdot T_{\text{cpu}} + \alpha_{\text{io}} \cdot B_{\text{scan}} + \alpha_{\text{shuffle}} \cdot B_{\text{shuffle}}
+\end{equation}
+While analytical formulations provide low computational overhead, empirical studies have repeatedly demonstrated their vulnerability to catastrophic error propagation. First, cardinality estimation errors compound exponentially with join tree depth under standard independence and uniform distribution assumptions (the attribute value independence assumption). Second, as diagnosed in Section~1, analytical cost models frequently exhibit \emph{metric invariance}: variations in join sequence or pipeline operators across distinct candidate plans often evaluate to identical scan and shuffle estimates prior to runtime materialization, producing severe value collapse and inverted plan rankings.
+
+\subsection{Learned Query Optimization}
+To overcome the limitations of static analytical models, data-driven and machine-learned optimizers have emerged as an active area of investigation:
+\begin{itemize}
+    \item \textbf{End-to-End Deep Learning Optimizers:} Systems such as Neo~\cite{marcus2019neo} and ReJOIN~\cite{marcus2018rejoin} formulate join order selection as a reinforcement learning or deep tree-convolution problem. While effective in single-node environments, full end-to-end neural optimizers require tens of thousands of query executions for cold-start training and incur substantial inference latencies exceeding hundreds of milliseconds per candidate plan.
+    \item \textbf{Steering Systems:} Bao~\cite{marcus2021bao} mitigates the risks of end-to-end models by steering existing query optimizers through query hints (e.g., selecting between hash joins, merge joins, or index scans) guided by tree-convolutional neural networks. However, Bao optimizes solely for execution time and provides no formal budget-enforcement guarantees under estimation errors.
+    \item \textbf{Learned Cost Correction Layers:} Recent architectures augment existing engine cost models with learned regression or gradient boosting correctors. While improving average rank correlation, deterministic point-prediction correctors provide no finite-sample guarantees against tail execution blowups.
+\end{itemize}
+
+\subsection{Robust and Multi-Objective Query Optimization}
+Multi-objective query optimization (MOQO) balances multiple conflicting performance metrics, such as monetary cost and execution latency:
+\begin{itemize}
+    \item \textbf{Budget-Constrained Formulation:} Lyu et al.~\cite{lyu2018multiobjective} formalize budget-constrained query execution by seeking the fastest execution plan whose expected cost satisfies a prescribed financial threshold $B$: $\min_{\pi} \hat{\mathcal{L}}(\pi) \text{ s.t. } \hat{\mathcal{C}}(\pi) \le B$.
+    \item \textbf{Lagrangian Penalty Pitfalls:} Prior heuristic approaches frequently embed budget violations into an unconstrained objective via Lagrangian penalty multipliers $\lambda \cdot \max(0, \hat{\mathcal{C}}(\pi) - B)$. However, when candidate plan generation enforces hard constraint filtering prior to ranking, evaluated candidate plans satisfy $\hat{\mathcal{C}} \le B$ by definition, causing the penalty term to collapse identically to zero and rendering $\lambda$ mathematically inert.
+    \item \textbf{Robust Query Processing:} Parametric query optimization (PQO) and robust execution techniques (e.g., SkinnerDB~\cite{trummer2019skinnerdb}) address parameter uncertainty via adaptive switching or bounded regret. Nonetheless, existing frameworks lack distribution-free, finite-sample statistical certificates for budget compliance on distributed Spark clusters.
+\end{itemize}
+
+\subsection{Conformal Prediction and Systems Uncertainty}
+Conformal prediction, pioneered by Vovk et al.~\cite{vovk2005algorithmic} and popularized by Angelopoulos and Bates~\cite{angelopoulos2021gentle}, provides a rigorous mathematical framework for distribution-free uncertainty quantification. Unlike Bayesian methods that require strong prior assumptions, split conformal prediction guarantees that a prediction set or upper bound contains the true ground-truth value with user-specified confidence $(1 - \delta)$ for any exchangeable data distribution in finite samples. 
+
+While conformal prediction has seen adoption in computer vision and healthcare safety, its application to distributed database planning remains unexploited. MOCAP is the first architecture to integrate split conformal prediction into Apache Spark's Catalyst engine, converting heuristic cost estimates into certified chance constraints $\Pr(\mathcal{C}(\pi) \le B) \ge 1 - \delta$.
+
+\begin{table*}[t]
+\centering
+\caption{Taxonomy and Architectural Comparison of Query Optimization Frameworks.}
+\label{tab:taxonomy_summary}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Framework} & \textbf{Objective} & \textbf{Cost Model} & \textbf{Uncertainty Handling} & \textbf{Budget Certificate} & \textbf{Engine Integration} & \textbf{Tail Risk} \\
+\midrule
+Apache Spark CBO~\cite{armbrust2015spark} & Latency & Analytical & None (Deterministic) & None & Native Catalyst & High \\
+Neo~\cite{marcus2019neo} & Latency & Deep Tree-CNN & Empirical Variance & None & Custom Engine & High \\
+Bao~\cite{marcus2021bao} & Latency & Tree-CNN & Thompson Sampling & None & PostgreSQL & Moderate \\
+SkinnerDB~\cite{trummer2019skinnerdb} & Latency & Reinforcement & UCB Regret Bound & None & Custom Engine & Moderate \\
+Lyu et al.~\cite{lyu2018multiobjective} & Latency / Cost & Parametric & Interval Bounds & Heuristic Bound & Relational DB & Moderate \\
+\textbf{MOCAP (Ours)} & \textbf{Pareto Latency/Cost} & \textbf{Learned GBDT} & \textbf{Split Conformal} & \textbf{Certified } $\mathbf{1 - \delta}$ & \textbf{Spark Catalyst} & \textbf{Provably Bounded} \\
+\bottomrule
+\end{tabular}
+\end{table*}

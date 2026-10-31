@@ -1,0 +1,5 @@
+delta,target_coverage_pct,empirical_coverage_pct,coverage_error_pct,quantile_q,inflation_factor,point_violation_rate_pct,conformal_violation_rate_pct,violation_reduction_pct
+0.01,99.0,100.0,1.0,0.9368,2.5518,23.4,0.0,100.0
+0.05,95.0,100.0,5.0,0.9368,2.5518,23.4,0.0,100.0
+0.1,90.0,100.0,10.0,0.6394,1.8954,23.4,0.0,100.0
+0.2,80.0,100.0,20.0,0.3392,1.4039,23.4,0.0,100.0

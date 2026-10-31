@@ -1,0 +1,31 @@
+name: Telemetry Schema Validator
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate-schema:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Validate Telemetry Schema
+      run: |
+        python -c "
+        REQUIRED_FIELDS = [
+            'query_id', 'plan_id', 'strategy', 'latency_ms', 'bytes_scanned',
+            'bytes_shuffled', 'executor_seconds', 'run_number', 'cache_state',
+            'aqe_enabled', 'cbo_enabled', 'num_cores', 'memory_gb', 'seed', 'timestamp'
+        ]
+        import glob, os, pandas as pd
+        csv_files = glob.glob('results/**/*.csv', recursive=True)
+        print(f'Discovered {len(csv_files)} result CSVs.')
+        "

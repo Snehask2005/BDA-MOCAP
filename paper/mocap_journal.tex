@@ -1,0 +1,36 @@
+\documentclass[journal,10pt,compsoc]{IEEEtran}
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{cite}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{MOCAP: Resolving Structural Deficiencies in Spark Multi-Objective Query Optimization via Chance-Constrained Conformal Bounds and Scalable Search}
+
+\author{Roshini~R.,~Hridhika~Satheesh,~Sneha~S.,~and~Anaswara~P.%
+\thanks{All authors contributed to the design, implementation, and empirical validation of the revamped MOCAP architecture.}}
+
+\maketitle
+
+\begin{abstract}
+Multi-objective query optimization in distributed big data engines must arbitrate conflicting tradeoffs between monetary cloud billing and execution latency. However, early prototypes suffered from critical structural deficiencies: analytical cost predictor invariance causing value collapse across join orderings, lack of multi-node empirical validation, and mathematically inert Lagrangian penalty selection. In this paper, we present the modernized MOCAP architecture. We resolve predictor invariance through a Catalyst physical plan feature extractor and gradient-boosted predictor that achieves a rank correlation of $\rho = 0.9838$ and $100\%$ Top-1 optimal plan selection under strict grouped query cross-validation. Furthermore, we replace brittle point-prediction filters with a split-conformal calibration engine providing certified finite-sample coverage guarantees $\Pr(\mathcal{C} \le B) \ge 1 - \delta$, reducing budget violations from $23.4\%$ to $0.0\%$. We present our system architecture, formal coverage proofs, and empirical evaluation across TPC-DS and TPC-H benchmarks on Apache Spark.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Query Optimization, Apache Spark, Conformal Prediction, Chance-Constrained Optimization, Cost Modeling, Big Data Analytics.
+\end{IEEEkeywords}
+
+\input{sections/02_related_work.tex}
+
+\input{sections/04_predictor_conformal.tex}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
