@@ -33,12 +33,30 @@ class ConformalQuantile:
     raw_quantile_q: float
     multiplier: float  # exp(q)
     residuals_summary: Dict[str, float] = field(default_factory=dict)
+    rank_exceeds_n: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+
+        if self.rank_exceeds_n:
+            data["raw_quantile_q"] = None
+            data["multiplier"] = None
+            data["residuals_summary"]["q_val"] = None
+
+        return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> ConformalQuantile:
+        data = dict(data)
+        rank_exceeds_n = data.get("rank_exceeds_n", False)
+
+        if rank_exceeds_n:
+            data["raw_quantile_q"] = math.inf
+            data["multiplier"] = math.inf
+            summary = dict(data.get("residuals_summary", {}))
+            summary["q_val"] = math.inf
+            data["residuals_summary"] = summary
+
         return cls(**data)
 
 
@@ -119,8 +137,14 @@ class ConformalCalibrator:
 
         # Finite-sample order statistic rank: 1-indexed ceil((n + 1) * (1 - delta))
         rank = math.ceil((n + 1) * (1.0 - delta))
-        idx = min(rank - 1, n - 1)
-        q = sorted_residuals[idx]
+        rank_exceeds_n = rank > n
+        if rank_exceeds_n:
+            idx = n
+            q = math.inf
+        else:
+            idx = rank - 1
+            q = sorted_residuals[idx]
+
         multiplier = math.exp(q)
 
         mean_res = sum(sorted_residuals) / n
@@ -145,6 +169,7 @@ class ConformalCalibrator:
             raw_quantile_q=float(q),
             multiplier=float(multiplier),
             residuals_summary=summary,
+	        rank_exceeds_n=rank_exceeds_n,
         )
 
     def calibrate(

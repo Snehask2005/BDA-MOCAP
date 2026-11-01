@@ -1,0 +1,101 @@
+# =============================================================================
+# MOCAP shared execution environment  (owner: Anaswara)
+#
+# Single source of truth for every Spark setting, seed and experiment knob
+# used by execution/ and experiments/. All four developers load this file
+# through execution.config.load_env() so that runs never diverge.
+#
+# Pick a profile with   --profile local   or   --profile cluster
+# (or the MOCAP_PROFILE environment variable).
+# =============================================================================
+
+versions:
+  spark: "4.2.0"
+  python: "3.12"
+  java: "17"
+
+seeds:
+  global: 20261031          # random baseline, data generation, splits
+  sampling: 7
+
+# -----------------------------------------------------------------------------
+# Spark settings shared by every profile.
+#
+# Candidate measurement runs with join reordering and automatic broadcast
+# OFF so that the plan MOCAP hinted is the plan Spark actually executes
+# (guardrail: "never trust raw join hints"). The Spark-default baselines
+# override these per run -- see experiment.spark_default_variants.
+# -----------------------------------------------------------------------------
+spark_conf:
+  spark.sql.adaptive.enabled: "false"
+  spark.sql.cbo.enabled: "true"
+  spark.sql.cbo.joinReorder.enabled: "false"
+  spark.sql.autoBroadcastJoinThreshold: "-1"
+  spark.sql.shuffle.partitions: "8"
+  spark.sql.session.timeZone: "UTC"
+  spark.ui.enabled: "true"          # needed for executor-time telemetry (REST API)
+  spark.ui.showConsoleProgress: "false"
+
+profiles:
+  local:
+    master: "local[2]"
+    app_name: "MOCAP-local"
+    num_cores: 2
+    memory_gb: 4
+    spark_conf:
+      spark.driver.memory: "4g"
+      spark.sql.shuffle.partitions: "8"
+
+  cluster:
+    # On Dataproc / EMR the master is supplied by spark-submit (YARN).
+    master: null
+    app_name: "MOCAP-cluster"
+    num_cores: 32                    # total executor cores (e.g. 4 workers x 8)
+    memory_gb: 128                   # total executor memory
+    spark_conf:
+      spark.executor.instances: "4"
+      spark.executor.cores: "8"
+      spark.executor.memory: "24g"
+      spark.sql.shuffle.partitions: "200"
+
+# -----------------------------------------------------------------------------
+# Data locations. Paths may be local, gs:// (Dataproc) or s3:// (EMR).
+# -----------------------------------------------------------------------------
+data:
+  tpcds_sf10: "benchmarks/tpcds/sf10/parquet"
+  tpcds_sf100: "benchmarks/tpcds/sf100/parquet"
+  synthetic_root: "benchmarks/synthetic"   # local smoke-test data (NOT TPC-DS)
+
+# -----------------------------------------------------------------------------
+# Experiment protocol (plan Sections 7 and 11).
+# -----------------------------------------------------------------------------
+experiment:
+  repeats: 10                        # 10-30 measured repeats per plan
+  warmup_runs: 1                     # discarded, not logged as measurements
+  cache_mode: "warm"                 # "warm" or "cold" (clear cache each run)
+  budget_multipliers: [1.0, 1.2, 1.5, 2.0]
+  deltas: [0.01, 0.05, 0.10, 0.20]
+  default_delta: 0.05
+  # Conformal score: "signed" = log(C/C_hat), one-sided upper bound (default);
+  # "absolute" = |log(C/C_hat)| as in selector/conformal.py. See execution/harness.py.
+  conformal_residual: "signed"
+  default_budget_multiplier: 1.5
+  search_mode: "beam"
+  beam_width: 40
+  candidate_analysis_limit: 48
+  candidate_workers: 4
+  max_candidates_measured: 48        # cap on plans executed per query
+  bootstrap_resamples: 2000
+  confidence_level: 0.95
+  spark_default_variants:            # Spark's own planner, no MOCAP hints
+    - {name: "spark_default_cbo_off_aqe_off", cbo: false, aqe: false}
+    - {name: "spark_default_cbo_on_aqe_off",  cbo: true,  aqe: false}
+    - {name: "spark_default_cbo_off_aqe_on",  cbo: false, aqe: true}
+    - {name: "spark_default_cbo_on_aqe_on",   cbo: true,  aqe: true}
+  spark_default_broadcast_threshold: "10485760"   # Spark's own default (10 MB)
+
+outputs:
+  telemetry_dir: "results/telemetry"
+  phase5_dir: "results/phase5"
+  phase6_dir: "results/phase6"
+  figures_dir: "paper/figures"

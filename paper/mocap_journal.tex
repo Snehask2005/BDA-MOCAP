@@ -34,16 +34,16 @@
   fonttitle=\bfseries,
   title={#1}
 }
-
+\newcommand{\owner}[1]{{\scriptsize\color{blue!80!black}#1}}
 \begin{document}
 
 \title{\textbf{Robust Chance-Constrained Budget Enforcement under Uncertain Cost Prediction for Multi-Objective Spark Query Optimization}}
 
 \author{
   \textbf{Roshini Ridhuparna}\thanks{Lead Editor; Robust Optimizer \& Theoretical Formulations Lead.}, \quad
-  \textbf{Hridhika}\thanks{Learned Cost Predictor \& Plan Feature Engineering Lead.}, \quad
-  \textbf{Sneha}\thanks{Candidate Join Search \& Dynamic Programming Pruning Lead.}, \quad
-  \textbf{Anaswara}\thanks{Multi-Node Cluster Benchmarking \& Execution Telemetry Lead.} \\
+  \textbf{Hridhika Satheesh}\thanks{Learned Cost Predictor \& Plan Feature Engineering Lead.}, \quad
+  \textbf{S. K. Sneha}\thanks{Candidate Join Search \& Dynamic Programming Pruning Lead.}, \quad
+  \textbf{Anaswara S. P.}\thanks{Multi-Node Cluster Benchmarking \& Execution Telemetry Lead.} \\
   \textit{Department of Computer Science \& Engineering} \\
   \textit{Big Data Analytics Research Group}
 }
@@ -268,7 +268,7 @@ When $\mathcal{F} = \emptyset$ (i.e., every candidate violates $\hat{C}_i^+ \le 
 \section{Experimental Evaluation}
 \label{sec:experiments}
 
-\textit{[Section owned by Anaswara: Multi-node cluster deployment (AWS EMR/Dataproc), TPC-DS SF10/100, E1--E5 experiments, Wilcoxon tests, cloud billing validation.]}
+\input{sections/experiments.tex}
 
 % ==============================================================================
 % SECTION 6: CONCLUSION (All Authors)

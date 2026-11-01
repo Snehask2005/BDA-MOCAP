@@ -176,15 +176,14 @@ def test_quantile_edge_cases(sample_calibrator: ConformalCalibrator):
     with pytest.raises(ValueError, match="delta must be in"):
         sample_calibrator.compute_quantile([0.1, 0.2], delta=1.5)
 
-    # Very small sample size where ceil((n+1)(1-delta)) > n
-    # n=2, delta=0.05 => ceil(3 * 0.95) = 3 > 2 -> should clamp or use max
-    q_small = sample_calibrator.compute_quantile([0.1, 0.2], delta=0.05)
-    assert q_small.quantile_index <= 2
-    assert q_small.raw_quantile_q == 0.2
-
-
 # ===========================================================================
-# 2. Plan Bounds & Interval Filter Tests (Phase 2 & 3)
+    # n=2, delta=0.05 => k=3 > n
+    # Exact finite-sample quantile is unbounded.
+    q_small = sample_calibrator.compute_quantile([0.1, 0.2], delta=0.05)
+    assert q_small.quantile_index == 2
+    assert q_small.rank_exceeds_n is True
+    assert math.isinf(q_small.raw_quantile_q)
+    assert math.isinf(q_small.multiplier)# 2. Plan Bounds & Interval Filter Tests (Phase 2 & 3)
 # ===========================================================================
 
 def test_plan_bounds_computations():
@@ -466,3 +465,30 @@ def test_robust_optimizer_infeasible_fallback():
     assert result.selected_plan.plan_id == "PLAN_A"  # Min cost over budget
     assert result.infeasible_resolution is not None
     assert result.infeasible_resolution.overrun_amount == 21.0  # 36 - 15
+
+def test_unbounded_quantile_serializes_as_strict_json(sample_calibrator):
+    import json
+
+    q = sample_calibrator.compute_quantile([0.1, 0.2], delta=0.05)
+    data = q.to_dict()
+
+    assert data["rank_exceeds_n"] is True
+    assert data["raw_quantile_q"] is None
+    assert data["multiplier"] is None
+    assert data["residuals_summary"]["q_val"] is None
+
+    json.dumps(data, allow_nan=False)
+
+
+def test_unbounded_quantile_json_round_trip(sample_calibrator):
+    import json
+    from selector.conformal import ConformalQuantile
+
+    q = sample_calibrator.compute_quantile([0.1, 0.2], delta=0.05)
+    serialized = json.dumps(q.to_dict(), allow_nan=False)
+    restored = ConformalQuantile.from_dict(json.loads(serialized))
+
+    assert restored.rank_exceeds_n is True
+    assert math.isinf(restored.raw_quantile_q)
+    assert math.isinf(restored.multiplier)
+    assert math.isinf(restored.residuals_summary["q_val"])
