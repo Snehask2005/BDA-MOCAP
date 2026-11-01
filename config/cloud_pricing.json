@@ -1,0 +1,24 @@
+{
+  "_comment": "Cloud pricing profiles for experiments/cloud_cost.py. VERIFY every number against the provider's current price page for YOUR region before reporting results; prices change. Units: USD per hour per instance unless stated.",
+  "dataproc": {
+    "source": "https://cloud.google.com/dataproc/pricing and https://cloud.google.com/compute/vm-instance-pricing",
+    "verify_before_use": true,
+    "region": "us-central1",
+    "service_fee_per_vcpu_hour": 0.010,
+    "instances": {
+      "n2-standard-4": {"vcpus": 4, "memory_gb": 16, "compute_per_hour": 0.1942},
+      "n2-standard-8": {"vcpus": 8, "memory_gb": 32, "compute_per_hour": 0.3885}
+    },
+    "storage_per_gb_month": 0.04
+  },
+  "emr": {
+    "source": "https://aws.amazon.com/emr/pricing/ and https://aws.amazon.com/ec2/pricing/on-demand/",
+    "verify_before_use": true,
+    "region": "us-east-1",
+    "instances": {
+      "m5.xlarge": {"vcpus": 4, "memory_gb": 16, "compute_per_hour": 0.192, "emr_fee_per_hour": 0.048},
+      "m5.2xlarge": {"vcpus": 8, "memory_gb": 32, "compute_per_hour": 0.384, "emr_fee_per_hour": 0.096}
+    },
+    "storage_per_gb_month": 0.10
+  }
+}

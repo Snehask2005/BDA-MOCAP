@@ -16,6 +16,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.12"
+    - name: Install schema validation dependencies
+      run: python -m pip install pandas==2.3.3
 
     - name: Validate Telemetry Schema
       run: |

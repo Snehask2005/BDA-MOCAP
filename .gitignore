@@ -57,3 +57,13 @@ data/**/*.json
 # ==============================
 
 experiments/results/*
+# LaTeX build artifacts
+/paper/mocap_journal.aux
+/paper/mocap_journal.fdb_latexmk
+/paper/mocap_journal.fls
+/paper/mocap_journal.log
+/paper/mocap_journal.out
+/paper/mocap_journal.pdf
+/paper/mocap_journal.synctex.gz
+/paper/mocap_journal.bbl
+/paper/mocap_journal.blg
